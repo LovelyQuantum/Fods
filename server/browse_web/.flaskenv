@@ -1,0 +1,2 @@
+FLASK_APP=browse_web
+FLASK_ENV=production

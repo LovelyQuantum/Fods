@@ -1,0 +1,13 @@
+python-dotenv
+flask
+flask_bootstrap
+flask_wtf
+flask_login
+flask_sqlalchemy
+pymemcache
+flask_dropzone
+opencv-python
+Pillow
+psycopg2
+gunicorn
+gevent

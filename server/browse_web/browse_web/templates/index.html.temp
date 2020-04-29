@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="" />
+    <meta name="author" content="Dashboard" />
+    <title>异物检测系统</title>
+    <!-- Favicons -->
+    <script src="../static/lib/js/echarts.min.js"></script>
+    <link href="../static/img/favicon.png" rel="icon" />
+    <!-- Bootstrap core CSS -->
+    <link
+      href="../static/lib/bootstrap/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!--external css-->
+    <link
+      href="../static/lib/font-awesome/css/font-awesome.css"
+      rel="stylesheet"
+    />
+    <!--   Custom styles for this template -->
+    <link href="../static/css/style.css" rel="stylesheet" />
+    <link href="../static/css/index.css" rel="stylesheet" />
+    <link href="../static/css/style-responsive.css" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="../static/lib/open-iconic/font/css/open-iconic-bootstrap.css"
+    />
+    <link rel="stylesheet" href="../static/css/upload/style.css" />
+    <link
+      rel="stylesheet"
+      href="../static/css/dropzone.min.css"
+      type="text/css"
+    />
+    <style type="text/css">
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #wrap {
+        margin: 0;
+        padding: 150px;
+      }
+      .post {
+        width: 100px;
+        height: 100px;
+        background: #0099ff;
+        border-radius: 200px;
+        display: block;
+        position: relative;
+      }
+      .post span {
+        display: inline-block;
+        width: 126px;
+        height: 16px;
+        background: #0099ff;
+        position: absolute;
+        top: 42px;
+        left: -13px;
+        border-radius: 5px;
+      }
+      .s1 {
+        transform: rotate(0deg);
+      }
+      .s2 {
+        transform: rotate(30deg);
+      }
+      .s3 {
+        transform: rotate(60deg);
+      }
+      .s4 {
+        transform: rotate(90deg);
+      }
+      .s5 {
+        transform: rotate(120deg);
+      }
+      .s6 {
+        transform: rotate(150deg);
+      }
+      .y1 {
+        width: 60px;
+        height: 60px;
+        left: 80px;
+        top: 0px;
+      }
+      .y1 span {
+        width: 88px;
+        height: 8px;
+        display: inline-block;
+        background: #0099ff;
+        position: absolute;
+        top: 26px;
+        left: -14px;
+        border-radius: 8px;
+      }
+      .y0 {
+        animation-name: slide1;
+        animation-duration: 10s;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
+      }
+      @keyframes slide1 {
+        0% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .y1 {
+        animation-name: slide2;
+        animation-duration: 10s;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
+      }
+      @keyframes slide2 {
+        0% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(-180deg);
+        }
+        100% {
+          transform: rotate(-360deg);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <section id="container">
+      <header class="header black-bg">
+        <div class="sidebar-toggle-box"></div>
+        <!--logo start-->
+        <a href="index.html" class="logo hd-title"
+          ><img src="static/img/logo.png" style="height: 50px;"
+        /></a>
+        <!--logo end-->
+        <div class="notify-row hd-title">
+          <b>阳泉煤业（集团）有限责任公司井下皮带异物检测系统</b>
+        </div>
+        <div class="top-menu">
+          <ul class="nav pull-right top-menu" style="display:none;">
+            <li>
+              <a class="logout" href="{{ url_for('logout') }}">退出登录</a>
+            </li>
+          </ul>
+        </div>
+      </header>
+      <div id="wrap" style="margin: auto;">
+        <p style="font-size: 400%; text-align: center; color: darkcyan;">
+          网站升级中
+        </p>
+        <br>
+        <br>
+        <div class="post y0" style="margin: auto;">
+          <span class="s1"></span>
+          <span class="s2"></span>
+          <span class="s3"></span>
+          <span class="s4"></span>
+          <span class="s5"></span>
+          <span class="s6"></span>
+        </div>
+        <div class="post y1" style="margin: auto;">
+          <span class="s1"></span>
+          <span class="s2"></span>
+          <span class="s3"></span>
+          <span class="s4"></span>
+          <span class="s5"></span>
+          <span class="s6"></span>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>

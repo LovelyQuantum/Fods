@@ -1,0 +1,5 @@
+nvidia-ml-py3
+opencv-python
+pymemcache
+sqlalchemy
+psycopg2

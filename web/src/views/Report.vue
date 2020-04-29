@@ -1,0 +1,257 @@
+<!-- =========================================================================================
+    File Name: Error404.vue
+    Description: 404 Page
+    ----------------------------------------------------------------------------------------
+    Item Name: Vuexy - Vuejs, HTML & Laravel Admin Dashboard Template
+      Author: Pixinvent
+    Author URL: http://www.themeforest.net/user/pixinvent
+========================================================================================== -->
+
+<template>
+  <div>
+    <div class="vx-row">
+      <div class="vx-col w-full sm:w-1/2 md:w-1/2 lg:w-1/4 xl:w-1/4">
+        <statistics-card-line
+          hideChart
+          class="mb-base"
+          icon="CpuIcon"
+          icon-right
+          statistic="1天"
+          statisticTitle="系统运行时间"
+        />
+      </div>
+
+      <div class="vx-col w-full sm:w-1/2 md:w-1/2 lg:w-1/4 xl:w-1/4">
+        <statistics-card-line
+          hideChart
+          class="mb-base"
+          icon="ServerIcon"
+          icon-right
+          statistic="正常"
+          statisticTitle="系统工作状态"
+          color="success"
+        />
+      </div>
+
+      <div class="vx-col w-full sm:w-1/2 md:w-1/2 lg:w-1/4 xl:w-1/4">
+        <statistics-card-line
+          hideChart
+          class="mb-base"
+          icon="ActivityIcon"
+          icon-right
+          statistic="154"
+          statisticTitle="预警次数"
+          color="warning"
+        />
+      </div>
+
+      <div class="vx-col w-full sm:w-1/2 md:w-1/2 lg:w-1/4 xl:w-1/4">
+        <statistics-card-line
+          hideChart
+          class="mb-base"
+          icon="AlertOctagonIcon"
+          icon-right
+          statistic="13"
+          statisticTitle="严重预警次数"
+          color="danger"
+        />
+      </div>
+    </div>
+    <div class="vx-col w-full">
+      <div class="vx-row w-1/4 flex"></div>
+      <vx-card title="预警统计" class="mb-base mt-5">
+        <template slot="actions"></template>
+        <div slot="no-body" class="p-6 pb-0">
+          <div class="vx-row mb-1">
+            <div class="my-auto ml-5 mr-5"><span>范围查询</span></div>
+            <datepicker
+              :language="zh"
+              :format="dateFormat"
+              placeholder="起始日期"
+              v-model="dateRangeBegin"
+              class="my-auto"
+            ></datepicker>
+            <div class="my-auto ml-5 mr-5"><span>—</span></div>
+            <datepicker
+              :language="zh"
+              :format="dateFormat"
+              placeholder="截至日期"
+              v-model="dateRangeEnd"
+              class="my-auto"
+            ></datepicker>
+            <vs-button
+              color="primary"
+              type="filled"
+              class="ml-5"
+              @click="recordQuery()"
+              >查询</vs-button
+            >
+            <vs-button
+              color="primary"
+              type="filled"
+              class="ml-5"
+              @click="clearDateRange()"
+              >重置</vs-button
+            >
+          </div>
+          <div class="vx-row mb-1">
+            <p class="ml-10" v-if="recordQueryMessage">
+              {{ recordQueryMessage }}
+            </p>
+          </div>
+          <vue-apex-charts
+            type="line"
+            height="266"
+            :options="chartOptions"
+            :series="salesLine.series"
+          />
+        </div>
+      </vx-card>
+    </div>
+  </div>
+</template>
+
+<script>
+import VueApexCharts from "vue-apexcharts";
+import Datepicker from "vuejs-datepicker";
+import { zh } from "vuejs-datepicker/dist/locale";
+import StatisticsCardLine from "@/components/statistics-cards/StatisticsCardLine.vue";
+
+export default {
+  components: {
+    VueApexCharts,
+    StatisticsCardLine,
+    Datepicker
+  },
+  data() {
+    return {
+      zh: zh,
+      dateFormat: "yyyy-MM-dd",
+      dateRangeBegin: null,
+      dateRangeEnd: null,
+      recordQueryMessage: null,
+      chartOptions: {
+        chart: {
+          toolbar: { show: false },
+          zoom: { enabled: false },
+          dropShadow: {
+            enabled: true,
+            top: 20,
+            left: 2,
+            blur: 6,
+            opacity: 0.2
+          }
+        },
+        stroke: {
+          curve: "smooth",
+          width: 4
+        },
+        grid: {
+          borderColor: "#ebebeb"
+        },
+        legend: {
+          show: false
+        },
+        colors: ["#df87f2"],
+        fill: {
+          type: "gradient",
+          gradient: {
+            shade: "dark",
+            inverseColors: false,
+            gradientToColors: ["#7367F0"],
+            shadeIntensity: 1,
+            type: "horizontal",
+            opacityFrom: 1,
+            opacityTo: 1,
+            stops: [0, 100, 100, 100]
+          }
+        },
+        markers: {
+          size: 0,
+          hover: {
+            size: 5
+          }
+        },
+        xaxis: {
+          labels: {
+            style: {
+              cssClass: "text-grey fill-current"
+            }
+          },
+          axisTicks: {
+            show: false
+          },
+          categories: [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "July",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec"
+          ],
+          axisBorder: {
+            show: false
+          }
+        },
+        yaxis: {
+          tickAmount: 5,
+          labels: {
+            style: {
+              cssClass: "text-grey fill-current"
+            },
+            formatter(val) {
+              return val > 999 ? `${(val / 1000).toFixed(1)}k` : val;
+            }
+          }
+        },
+        tooltip: {
+          x: { show: false }
+        }
+      },
+      salesLine: {
+        series: [
+          {
+            name: "Sales",
+            data: [140, 180, 150, 205, 160, 295, 125, 255, 205, 305, 240, 295]
+          }
+        ]
+      }
+    };
+  },
+  methods: {
+    clearDateRange() {
+      this.dateRangeBegin = null;
+      this.dateRangeEnd = null;
+      this.recordQueryMessage = null;
+    },
+    recordQuery() {
+      if (this.dateRangeBegin && this.dateRangeEnd) {
+        const beginDate =
+          this.dateRangeBegin.getFullYear() +
+          " 年 " +
+          (this.dateRangeBegin.getMonth() + 1) +
+          " 月 " +
+          this.dateRangeBegin.getDate() +
+          " 日";
+        const endDate =
+          this.dateRangeEnd.getFullYear() +
+          " 年 " +
+          (this.dateRangeEnd.getMonth() + 1) +
+          " 月 " +
+          this.dateRangeEnd.getDate() +
+          " 日";
+        this.recordQueryMessage =
+          "已查询到 " + beginDate + "  至  " + endDate + " 之间的记录";
+      } else {
+        this.recordQueryMessage = null;
+      }
+    }
+  }
+};
+</script>

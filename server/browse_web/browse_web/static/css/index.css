@@ -1,0 +1,211 @@
+.form {
+	margin: 0 20px
+}
+
+.form-label {
+	left: 0;
+	text-align:left;
+}
+
+.form-input {
+	margin: 3px 0 15px 0
+}
+
+.form-button {
+	margin: 0 0 20px 0;
+	text-align: left;
+}
+.faa {
+	width:740px;
+	margin:0 auto;
+}
+#canvas {
+	background:#eee;
+	cursor:default;
+} 
+.modal-btn {
+	margin-bottom: 5px
+}
+.mychart {
+	margin: 0;
+	padding: 0;
+}
+
+.model-faa {
+	width:740px;
+	margin:0 0;
+}
+.model-fbb {
+	width:100%;
+	margin:0 0;
+}
+
+.right-img {
+	width: 39.3%;
+	right: 1px;
+}
+
+.display-image {
+	padding: 2px 3px;
+}
+
+.newImag {
+	margin: 0; 
+	padding:0 3px;
+}
+
+.my-footer {
+	padding: 0;
+}
+/*新增*/
+.select-img {
+	border:1px solid red;
+}
+
+.img-footer {
+	padding: 1px;
+    text-align: left;
+    margin: 0;
+}
+.img-footer > nav {
+	margin: 0;
+}
+.footer-pagination {
+	margin: 5px;
+}
+
+.side-footer {
+	padding: 2px 3px;
+}
+.side-context {
+	margin: 0;
+	padding: 0;
+}
+
+.btn-group {
+	float: right;
+}
+
+.select-group {
+	text-align: left;
+	padding: 0;
+}
+
+.mid-context {
+	margin: 0;
+	padding: 0;
+}
+
+.foreign-table {
+	text-align: center;
+	border-width:0px 1px 1px 0px;
+	border: solid 1px #ccc;
+	line-height:100px;
+}
+
+
+.foreignTh {
+    border-width:0px 1px 1px 0px;
+	border: solid 1px #ccc;
+}
+
+.foreign-table > thead > tr > th {
+	vertical-align: bottom;
+    border-bottom: 1px solid #ccc;
+    border: solid 1px #ccc;
+    text-align: center;
+} 
+
+.foreign-table > tbody > tr > td {
+	border-width:0px 1px 1px 0px;
+	border: solid 1px #ccc;
+} 
+
+.foreign-table > tbody > tr > td > p {
+	padding:auto auto; 
+	margin:auto auto;
+}
+
+.detail-bar {
+	margin-bottom: 5px;
+	padding: 0; 
+}
+
+.block-footer {
+	position:absolute;
+	bottom:13%; 
+	overflow:hidden;
+}
+.buttom-footer {
+	text-align: center;
+}
+
+.btn-footer {
+	font-size: 14px;
+    font-weight: 400;
+	text-align: center;
+	margin-top: 8px;
+}
+
+.myModal {
+	margin: 0px !important;
+}
+
+.myModal-body {
+	padding: 0px !important;
+	background: #000;
+}
+
+.sub-menu > a > span {
+	width: 90px;
+	height: 17px;
+	overflow: hidden;
+}
+
+.myModal-header {
+	padding: 5px 20px;
+}
+
+.hide-left {
+	height: 100%;
+	position: absolute;
+	z-index: 99;
+}
+
+.hide-mid {
+	height: 100%;
+	position: absolute;
+	z-index: 99;
+	left: calc(33.33333333% + 30px);
+}
+
+.hide-right {
+	height: 100%;
+	position: absolute;
+	z-index: 99;
+	right: 0px;
+}
+img {
+	-moz-user-select: none; 
+	-webkit-user-select: none; 
+	-ms-user-select: none; 
+	-khtml-user-select: none; 
+	user-select: none;
+}
+
+.dropdown-row {
+	padding: 0 15px;
+}
+
+.dropdown-float {
+	float: left;
+	margin-right: 3px; 
+}
+
+.date-size {
+	width: 110px;
+}
+
+.line {
+	border: 1px solid #000;
+}

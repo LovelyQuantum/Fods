@@ -1,0 +1,60 @@
+version: "2.4"
+
+services:
+  status_register:
+    container_name: status_register
+    image: memcached
+    command: memcached -m 16 -p 12001
+
+  image_register_A:
+    container_name: image_register_A
+    image: memcached
+    command: memcached -m 64 -p 12002 -I 4m
+
+  image_register_B:
+    container_name: image_register_B
+    image: memcached
+    command: memcached -m 64 -p 12003 -I 4m
+
+  db:
+    image: postgres
+    container_name: postgres
+    volumes:
+      - yd_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=quantum
+      - POSTGRES_DB=mydb
+      - POSTGRES_PASSWORD=429526000
+
+  server:
+    container_name: server
+    image: registry.cn-hangzhou.aliyuncs.com/hina/server:v1.0
+    depends_on:
+      - db
+      - status_register
+    command: gunicorn -k gevent -w 5 -b server:8000 browse_web:app
+
+  nginx:
+    image: registry.cn-hangzhou.aliyuncs.com/hina/nginx:v1.0
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "8080:8080"
+    depends_on:
+      - server
+
+  yolo:
+    container_name: yolo
+    image: registry.cn-hangzhou.aliyuncs.com/hina/yolo:v0.9
+    runtime: nvidia
+    depends_on:
+      - status_register
+      - image_register_A
+      - image_register_B
+      - db
+      - nginx
+    command: python yolo.py
+
+volumes:
+  yd_data:
+    external: true
