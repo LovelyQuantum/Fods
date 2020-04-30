@@ -3,6 +3,7 @@
 # project side
 .vscode/
 test_use
+sandbox
 
 # web component
 .rej

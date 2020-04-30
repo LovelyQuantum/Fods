@@ -1,0 +1,6 @@
+flask
+flask-login
+flask-sqlalchemy
+flask-cors
+pytest
+psycopg2

@@ -1,12 +1,10 @@
 import os
 import click
-from flask import Flask, render_template
-from flask_wtf.csrf import CSRFError
+from flask import Flask
 from server.settings import config
 from server.extensions import db
-from server.blueprints.basic import basic_bp
-from server.blueprints.training import training_bp
 from server.models import Admin
+from server.apis import apis
 
 
 basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -20,7 +18,6 @@ def create_app(config_name=None):
     app.config.from_object(config[config_name])
 
     register_blueprints(app)
-    register_errors(app)
     register_extensions(app)
     register_commands(app)
     register_shell_context(app)
@@ -33,8 +30,7 @@ def register_extensions(app):
 
 
 def register_blueprints(app):
-    app.register_blueprint(basic_bp)
-    app.register_blueprint(training_bp)
+    app.register_blueprint(apis, url_prefix="/apis")
 
 
 def register_shell_context(app):
@@ -47,24 +43,6 @@ def register_template_context(app):
     @app.context_processor
     def make_template_context():
         pass
-
-
-def register_errors(app):
-    @app.errorhandler(400)
-    def bad_request(e):
-        return render_template("errors/400.html"), 400
-
-    @app.errorhandler(404)
-    def page_not_found(e):
-        return render_template("errors/404.html"), 404
-
-    @app.errorhandler(500)
-    def internal_server_error(e):
-        return render_template("errors/500.html"), 500
-
-    @app.errorhandler(CSRFError)
-    def handle_csrf_error(e):
-        return render_template("errors/400.html", description=e.description), 400
 
 
 def register_commands(app):
