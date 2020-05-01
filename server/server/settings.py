@@ -18,13 +18,15 @@ class BaseConfig:
 
 
 class DevelopmentConfig(BaseConfig):
-    SQLALCHEMY_DATABASE_URI = prefix + os.path.join(basedir, "data-dev.db")
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        "DEV_DATABASE_URL", prefix + os.path.join(basedir, "data-dev.db")
+    )
 
 
 class TestingConfig(BaseConfig):
     TESTING = True
     WTF_CSRF_ENABLED = False
-    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"  # in-memory database
+    SQLALCHEMY_DATABASE_URI = os.getenv("TEST_DATABASE_URL", "sqlite:///:memory:")
 
 
 class ProductionConfig(BaseConfig):

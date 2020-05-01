@@ -1,4 +1,5 @@
 from server.extensions import db
+from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 
@@ -23,30 +24,41 @@ class Admin(db.Model, UserMixin):
 
 # init when init system update when submit device settings
 class Device(db.Model):
-    __tablename__ = "device"
+    __tablename__ = "newDevice"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, default="摄像头")
-    ip = db.Column(db.String(30), default="0.0.0.0")
+    ip = db.Column(db.String, default="0.0.0.0")
     username = db.Column(db.String, default="admin")
     password = db.Column(db.String, default="12345")
-    images = db.relationship("Image", back_populates="device")
 
 
+# Foreign object detection
 # filled when submit device settings
 class FodCfg(db.Model):
-    __tablename = "fodCfg"
-    Id = db.Column(db.Integer, primary_key=True)
+    __tablename__ = "fodCfg"
+    id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.Integer)
     nor_lim = db.Column(db.Integer, default=10000)
     ext_lim = db.Column(db.Integer, default=40000)
     category_id = db.Column(db.Integer, default=0)
 
 
+class FodRecord(db.Model):
+    __tablename__ = "fodRecord"
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.now, index=True)
+    device_id = db.Column(db.Integer)
+    status = db.Column(db.String)
+    storage_path = db.Column(db.String)
+    tags = db.Column(db.String, default="")
+    areas = db.Column(db.String, default="")
+
+
 # Belt deviation detection
 # filled when submit device settings
 class BddCfg(db.Model):
     __tablename__ = "bddCfg"
-    Id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.Integer)
     nor_lim = db.Column(db.Integer, default=10000)
     category_id = db.Column(db.Integer, default=1)
@@ -55,14 +67,14 @@ class BddCfg(db.Model):
 # filled when init system
 class ModeCategory(db.Model):
     __tablename__ = "modeCategory"
-    Id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
 
 
 # filled when submit device settings
 class DnnModel(db.Model):
     __tablename__ = "dnnModel"
-    Id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     category_id = db.Column(db.Integer)
     model_id = db.Column(db.Integer)
     gpu_id = db.Column(db.Integer)
@@ -71,19 +83,26 @@ class DnnModel(db.Model):
 # filled when init system
 class Location(db.Model):
     __tablename__ = "location"
-    Id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     location_name = db.Column(db.Integer)
 
 
 # filled when init system
 class Gpu(db.Model):
     __tablename__ = "gpu"
-    Id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
 
 
 # filled when submit device settings
 class DeviceLocation(db.Model):
     __tablename__ = "deviceLocation"
-    Id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.Integer)
     location_id = db.Column(db.Integer)
+
+
+class Status(db.Model):
+    __tablename__ = "status"
+    id = db.Column(db.Integer, primary_key=True)
+    status = db.Column(db.String, default='running')
+    client = db.Column(db.Integer)

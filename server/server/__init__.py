@@ -2,8 +2,8 @@ import os
 import click
 from flask import Flask
 from server.settings import config
-from server.extensions import db
-from server.models import Admin
+from server.extensions import db, migrate
+from server.models import Device
 from server.apis import apis
 
 
@@ -27,6 +27,7 @@ def create_app(config_name=None):
 
 def register_extensions(app):
     db.init_app(app)
+    migrate.init_app(app, db)
 
 
 def register_blueprints(app):
@@ -61,35 +62,12 @@ def register_commands(app):
         click.echo("Initialized database.")
 
     @app.cli.command()
-    @click.option("--username", prompt=True, help="The username used to login.")
-    @click.option(
-        "--password",
-        prompt=True,
-        hide_input=True,
-        confirmation_prompt=True,
-        help="The password used to login.",
-    )
-    def init(username, password):
+    def init():
         """Building Bluelog, just for you."""
         click.echo("Initializing the database...")
         db.create_all()
 
-        admin = Admin.query.first()
-        if admin is not None:
-            click.echo("The administrator already exists, updating...")
-            admin.username = username
-            admin.set_password(password)
-        else:
-            click.echo("Creating the temporary administrator account...")
-            admin = Admin(
-                username=username,
-                blog_title="Bluelog",
-                blog_sub_title="No, I'm the real thing.",
-                name="Admin",
-                about="Anything about you.",
-            )
-            admin.set_password(password)
-            db.session.add(admin)
-
+        for i in range(10):
+            device = Device()
+            db.session.add(device)
         db.session.commit()
-        click.echo("Done.")

@@ -9,5 +9,5 @@ def test_app():
     context = app.app_context()
     context.push()
     yield app
-    db.drop_all()
+    drop_all()
     context.pop()

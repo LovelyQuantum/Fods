@@ -66,7 +66,7 @@
             <div class="my-auto ml-5 mr-5"><span>范围查询</span></div>
             <datepicker
               :language="zh"
-              :format="dateFormat"
+              :format="dateFormatter"
               placeholder="起始日期"
               v-model="dateRangeBegin"
               class="my-auto"
@@ -74,7 +74,7 @@
             <div class="my-auto ml-5 mr-5"><span>—</span></div>
             <datepicker
               :language="zh"
-              :format="dateFormat"
+              :format="dateFormatter"
               placeholder="截至日期"
               v-model="dateRangeEnd"
               class="my-auto"
@@ -83,7 +83,7 @@
               color="primary"
               type="filled"
               class="ml-5"
-              @click="recordQuery()"
+              @click="recordRangeCheck"
               >查询</vs-button
             >
             <vs-button
@@ -103,7 +103,7 @@
             type="line"
             height="266"
             :options="chartOptions"
-            :series="salesLine.series"
+            :series="recordSeries"
           />
         </div>
       </vx-card>
@@ -112,8 +112,10 @@
 </template>
 
 <script>
+import axios from "axios";
 import VueApexCharts from "vue-apexcharts";
 import Datepicker from "vuejs-datepicker";
+import moment from "moment";
 import { zh } from "vuejs-datepicker/dist/locale";
 import StatisticsCardLine from "@/components/statistics-cards/StatisticsCardLine.vue";
 
@@ -130,35 +132,37 @@ export default {
       dateRangeBegin: null,
       dateRangeEnd: null,
       recordQueryMessage: null,
+      recordSeries: {},
       chartOptions: {
         chart: {
           toolbar: { show: false },
           zoom: { enabled: false },
           dropShadow: {
             enabled: true,
-            top: 20,
-            left: 2,
-            blur: 6,
-            opacity: 0.2
+            top: 5,
+            left: 0,
+            blur: 4,
+            opacity: 0.1
           }
         },
         stroke: {
           curve: "smooth",
-          width: 4
+          dashArray: [0, 0],
+          width: [4, 4]
         },
         grid: {
-          borderColor: "#ebebeb"
+          borderColor: "#e7e7e7"
         },
         legend: {
           show: false
         },
-        colors: ["#df87f2"],
+        colors: ["#18a1a5", "#F97794"],
         fill: {
           type: "gradient",
           gradient: {
             shade: "dark",
             inverseColors: false,
-            gradientToColors: ["#7367F0"],
+            gradientToColors: ["#27c573", "#7367F0"],
             shadeIntensity: 1,
             type: "horizontal",
             opacityFrom: 1,
@@ -181,20 +185,7 @@ export default {
           axisTicks: {
             show: false
           },
-          categories: [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "July",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec"
-          ],
+          // categories: ["01", "05", "09", "13", "17", "21", "26", "31"],
           axisBorder: {
             show: false
           }
@@ -213,24 +204,35 @@ export default {
         tooltip: {
           x: { show: false }
         }
-      },
-      salesLine: {
-        series: [
-          {
-            name: "Sales",
-            data: [140, 180, 150, 205, 160, 295, 125, 255, 205, 305, 240, 295]
-          }
-        ]
       }
     };
   },
   methods: {
+    dateFormatter(date) {
+      return moment(date).format("YYYY-MM-DD");
+    },
+
     clearDateRange() {
       this.dateRangeBegin = null;
       this.dateRangeEnd = null;
       this.recordQueryMessage = null;
+      this.recordSeriesQuery();
     },
-    recordQuery() {
+
+    recordSeriesQuery() {
+      const path = "http://192.168.43.69:7101/apis/fod_record_report";
+      const data = {
+        dateRange: {
+          dateRangeBegin: this.dateRangeBegin,
+          dateRangeEnd: this.dateRangeEnd
+        }
+      };
+      axios.post(path, data).then(res => {
+        this.recordSeries = res.data.recordSeries;
+      });
+    },
+
+    recordRangeCheck() {
       if (this.dateRangeBegin && this.dateRangeEnd) {
         const beginDate =
           this.dateRangeBegin.getFullYear() +
@@ -248,10 +250,12 @@ export default {
           " 日";
         this.recordQueryMessage =
           "已查询到 " + beginDate + "  至  " + endDate + " 之间的记录";
-      } else {
-        this.recordQueryMessage = null;
+        this.recordSeriesQuery();
       }
     }
-  }
+  },
+  created() {
+    this.recordSeriesQuery();
+  },
 };
 </script>

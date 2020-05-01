@@ -3,8 +3,8 @@ from server.extensions import db
 
 
 def test_initdb_command(test_app):
-    db.create_all()
-    db.create_all()
+    create_all()
+    create_all()
     result = test_app.test_cli_runner().invoke(args=["initdb"])
     assert "Initialized database." in result.output
 
