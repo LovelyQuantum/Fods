@@ -8,7 +8,6 @@
 @Contact :   jin1349595233@gmail.com
 """
 # add additional function
-import cv2
 from pymemcache.client.base import Client
 from pymemcache import serde
 import tensorflow as tf

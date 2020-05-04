@@ -61,7 +61,6 @@ class BddCfg(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.Integer)
     nor_lim = db.Column(db.Integer, default=10000)
-    category_id = db.Column(db.Integer, default=1)
 
 
 # filled when init system
@@ -72,6 +71,7 @@ class ModeCategory(db.Model):
 
 
 # filled when submit device settings
+# all dnn models include fod, bdd and others
 class DnnModel(db.Model):
     __tablename__ = "dnnModel"
     id = db.Column(db.Integer, primary_key=True)
@@ -88,8 +88,8 @@ class Location(db.Model):
 
 
 # filled when init system
-class Gpu(db.Model):
-    __tablename__ = "gpu"
+class VirtualGpu(db.Model):
+    __tablename__ = "virtualGpu"
     id = db.Column(db.Integer, primary_key=True)
 
 
@@ -101,6 +101,7 @@ class DeviceLocation(db.Model):
     location_id = db.Column(db.Integer)
 
 
+# system status(running training or erroring...)
 class Status(db.Model):
     __tablename__ = "status"
     id = db.Column(db.Integer, primary_key=True)

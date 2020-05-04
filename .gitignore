@@ -4,6 +4,7 @@
 .vscode/
 test_use
 sandbox
+backup
 
 # web component
 .rej
