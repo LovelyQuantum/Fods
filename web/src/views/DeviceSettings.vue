@@ -9,7 +9,7 @@
           <vs-divider> 基础设置 </vs-divider>
           <div class="vx-col w-full md:w-1/2">
             <vs-input
-              v-validate="'required|alpha_dash'"
+              v-validate="'required'"
               label-placeholder="设备名称"
               name="设备名称"
               v-model="device.name"
@@ -52,7 +52,7 @@
               v-validate="'required'"
               label-placeholder="设备密码"
               name="设备密码"
-              v-model="device.passwd"
+              v-model="device.password"
               class="w-full mt-10"
             />
             <span class="text-danger text-sm" v-show="errors.has('设备密码')">{{
@@ -97,14 +97,14 @@
                 <div class="vx-row flex mb-5">
                   <div class="vx-col w-full md:w-1/6">
                     <vs-input
-                      v-model="nWarningThreshold"
+                      v-model="fodCfg.nWarningThreshold"
                       class="w-full"
                       disabled
                     />
                   </div>
                   <div class="vx-col w-full md:w-4/5">
                     <vs-slider
-                      v-model="nWarningThreshold"
+                      v-model="fodCfg.nWarningThreshold"
                       :min="200"
                       :max="1000"
                     />
@@ -114,14 +114,14 @@
                 <div class="vx-row flex">
                   <div class="vx-col w-full md:w-1/6">
                     <vs-input
-                      v-model="exWarningThreshold"
+                      v-model="fodCfg.exWarningThreshold"
                       class="w-full"
                       disabled
                     />
                   </div>
                   <div class="vx-col  w-full md:w-4/5">
                     <vs-slider
-                      v-model="exWarningThreshold"
+                      v-model="fodCfg.exWarningThreshold"
                       :min="200"
                       :max="1000"
                     />
@@ -136,13 +136,17 @@
                 <div class="vx-row flex mb-5">
                   <div class="vx-col w-full md:w-1/6">
                     <vs-input
-                      v-model="offsetDistance"
+                      v-model="bddCfg.offsetDistance"
                       class="w-full"
                       disabled
                     />
                   </div>
                   <div class="vx-col w-full md:w-4/5">
-                    <vs-slider v-model="offsetDistance" :min="10" :max="200" />
+                    <vs-slider
+                      v-model="bddCfg.offsetDistance"
+                      :min="10"
+                      :max="200"
+                    />
                   </div>
                 </div>
               </vs-tab>
@@ -210,47 +214,65 @@ export default {
         id: "",
         username: "",
         ip: "",
-        passwd: ""
+        password: "",
+        path: ""
       },
+      fodCfg: { nWarningThreshold: 400, exWarningThreshold: 800 },
+      bddCfg: { offsetDistance: 10 },
       switchs: [],
-      nWarningThreshold: 400,
-      exWarningThreshold: 800,
-      offsetDistance: 10,
       showTabs: false
     };
   },
 
   methods: {
     submitForm() {
-      const path = "http://localhost:5000/submit";
-      const deviceInfo = {
-        name: this.device.name,
-        username: this.device.username
+      const path = "http://192.168.43.69:7101/apis/device_setting";
+      const deviceSetting = {
+        device: this.device,
+        fodCfg: this.fodCfg,
+        bddCfg: this.bddCfg,
+        func: this.switchs
       };
       this.$validator.validateAll().then(result => {
         if (result) {
-          axios.post(path, deviceInfo).then(result => {
-            if (result) {
-              alert("form submitted!");
-            } else {
-              alert("Error occored!");
-            }
-          }).catch((error) => {
-          alert(error);
-        });
+          axios
+            .post(path, deviceSetting)
+            .then(res => {
+              if (res.data.status === "success") {
+                alert("保存成功");
+              } else {
+                alert("保存失败");
+              }
+            })
+            .catch(() => {
+              alert("网络错误，保存失败");
+            });
         } else {
-          alert("wrong format")
+          alert("请正确填写设置");
         }
       });
+    },
+    deviceInfoQuery() {
+      const path = "http://192.168.43.69:7101/apis/device_setting";
+      axios
+        .get(path, {
+          params: {
+            device_name: this.device.id
+          }
+        })
+        .then(res => {
+          this.device.path = res.data.path;
+        })
+        .then(() => {
+          this.loadPreviewVideo();
+        });
     },
 
     loadPreviewVideo() {
       if (Hls.isSupported()) {
         const elem = document.getElementById("preview_video");
         this.previw_hls = new Hls();
-        this.previw_hls.loadSource(
-          "http://ivi.bupt.edu.cn/hls/cctv" + this.test_val + "hd.m3u8"
-        );
+        this.previw_hls.loadSource(this.device.path);
         this.previw_hls.attachMedia(elem);
         this.previw_hls.on(Hls.Events.MANIFEST_PARSED, () => {
           elem.play(elem);
@@ -280,8 +302,7 @@ export default {
     },
     "$route.params.camera_id": function(newVal) {
       this.device.id = newVal;
-      this.test_val = 2;
-      this.loadPreviewVideo();
+      this.deviceInfoQuery();
     }
   },
 
@@ -290,7 +311,7 @@ export default {
   },
 
   mounted() {
-    this.loadPreviewVideo();
+    this.deviceInfoQuery();
   },
 
   beforeDestroy() {

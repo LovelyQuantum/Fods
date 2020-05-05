@@ -27,3 +27,8 @@ apis.add_url_rule(
     view_func=resources.FodRecordReportAPI.as_view("fod_record_report"),
     methods=["POST"],
 )
+apis.add_url_rule(
+    "/device_setting",
+    view_func=resources.DeviceSettingAPI.as_view("device_setting"),
+    methods=["GET", "POST"],
+)

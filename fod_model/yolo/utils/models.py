@@ -1,74 +1,94 @@
 from sqlalchemy.ext.declarative import declarative_base
-import nvidia_smi
-import tensorflow as tf
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime
-from sqlalchemy.orm import relationship
-import cv2
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from datetime import datetime
 
 
 Base = declarative_base()
 
 
+# init when init system update when submit device settings
 class Device(Base):
     __tablename__ = "device"
     id = Column(Integer, primary_key=True)
     name = Column(String, default="摄像头")
-    ip = Column(String(30), default="0.0.0.0")
+    ip = Column(String, default="0.0.0.0")
+    type = Column(String, default="camera")
     username = Column(String, default="admin")
     password = Column(String, default="12345")
-    client = Column(Integer, default=0)
-    mode = Column(String, default="none")
-    gpu = Column(Integer, default=-1)
-    start_point = Column(String, default="432 0")
-    nor_lim = Column(Integer, default=10000)
-    ext_lim = Column(Integer, default=40000)
-    borderline = Column(String, default="None")
-    images = relationship("Image", back_populates="device")
-    network_id = Column(Integer, ForeignKey("network.id"))
-    network = relationship("Network")
-
-    def to_json(self):
-        to_dict = self.__dict__
-        if "_sa_instance_state" in to_dict:
-            del to_dict["_sa_instance_state"]
-        return to_dict
 
 
-class Image(Base):
-    __tablename__ = "image"
+# Foreign object detection
+# filled when submit device settings
+class FodCfg(Base):
+    __tablename__ = "fodCfg"
     id = Column(Integer, primary_key=True)
-    level = Column(String)
+    device_id = Column(Integer)
+    n_warning_threshold = Column(Integer, default=10000)
+    ex_warning_threshold = Column(Integer, default=40000)
+
+
+class FodRecord(Base):
+    __tablename__ = "fodRecord"
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, default=datetime.now, index=True)
+    device_id = Column(Integer)
+    dnn_model_id = Column(Integer, default=1)
+    status = Column(String)
     storage_path = Column(String)
-    timestamp = Column(DateTime, index=True)
-    tags = Column(String, default="")
-    areas = Column(String, default="")
-    device_id = Column(Integer, ForeignKey("device.id"))
-    device = relationship("Device", back_populates="images")
+    tags = Column(String)
+    areas = Column(String)
 
 
-class Network(Base):
-    __tablename__ = "network"
+# Belt deviation detection
+# filled when submit device settings
+class BddCfg(Base):
+    __tablename__ = "bddCfg"
+    id = Column(Integer, primary_key=True)
+    device_id = Column(Integer)
+    offset_distance = Column(Integer)
+
+
+# filled when init system
+class ModeCategory(Base):
+    __tablename__ = "modeCategory"
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    usage = Column(String)
-    loss = Column(Float)
-    timestamp = Column(DateTime, index=True)
-    classes = Column(String)
-    storage_path = Column(String)
 
 
-def get_gpu_mem(gpu_num):
-    nvidia_smi.nvmlInit()
-    handle = nvidia_smi.nvmlDeviceGetHandleByIndex(int(gpu_num))
-    info = nvidia_smi.nvmlDeviceGetMemoryInfo(handle)
-    nvidia_smi.nvmlShutdown()
-    return int(f"{(info.free / 2 ** 30):.2f}")
+# filled when submit device settings
+# all dnn models include fod, bdd and others
+class DnnModel(Base):
+    __tablename__ = "dnnModel"
+    id = Column(Integer, primary_key=True)
+    category = Column(String)
+    classes = Column(String)  # use whitespace to split class names
+    weight = Column(String)
 
 
-def transform_image(camera, image):
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = tf.expand_dims(image, 0)
-    image = tf.image.resize_with_pad(image, (416, 416))
-    # FIXME don't use numbers
-    image = image / 255
-    return image
+# filled when init system
+class Location(Base):
+    __tablename__ = "location"
+    id = Column(Integer, primary_key=True)
+    location_name = Column(Integer)
+
+
+# filled when init system
+class VirtualGpu(Base):
+    __tablename__ = "virtualGpu"
+    id = Column(Integer, primary_key=True)
+    used = Column(Boolean)
+
+
+# filled when submit device settings
+class DeviceLocation(Base):
+    __tablename__ = "deviceLocation"
+    id = Column(Integer, primary_key=True)
+    device_id = Column(Integer)
+    location_id = Column(Integer)
+
+
+# system status(running training or erroring...)
+class SystemStatus(Base):
+    __tablename__ = "systemStatus"
+    id = Column(Integer, primary_key=True)
+    status = Column(String, default="running")

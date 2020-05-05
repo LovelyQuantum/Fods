@@ -1,7 +1,7 @@
-from server.extensions import db
 from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
+from server.extensions import db
 from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 # filled when init system
@@ -24,10 +24,11 @@ class Admin(db.Model, UserMixin):
 
 # init when init system update when submit device settings
 class Device(db.Model):
-    __tablename__ = "newDevice"
+    __tablename__ = "device"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, default="摄像头")
     ip = db.Column(db.String, default="0.0.0.0")
+    type = db.Column(db.String, default="camera")
     username = db.Column(db.String, default="admin")
     password = db.Column(db.String, default="12345")
 
@@ -38,9 +39,8 @@ class FodCfg(db.Model):
     __tablename__ = "fodCfg"
     id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.Integer)
-    nor_lim = db.Column(db.Integer, default=10000)
-    ext_lim = db.Column(db.Integer, default=40000)
-    category_id = db.Column(db.Integer, default=0)
+    n_warning_threshold = db.Column(db.Integer, default=10000)
+    ex_warning_threshold = db.Column(db.Integer, default=40000)
 
 
 class FodRecord(db.Model):
@@ -48,10 +48,11 @@ class FodRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.now, index=True)
     device_id = db.Column(db.Integer)
+    dnn_model_id = db.Column(db.Integer, default=1)
     status = db.Column(db.String)
     storage_path = db.Column(db.String)
-    tags = db.Column(db.String, default="")
-    areas = db.Column(db.String, default="")
+    tags = db.Column(db.String)
+    areas = db.Column(db.String)
 
 
 # Belt deviation detection
@@ -60,7 +61,7 @@ class BddCfg(db.Model):
     __tablename__ = "bddCfg"
     id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.Integer)
-    nor_lim = db.Column(db.Integer, default=10000)
+    offset_distance = db.Column(db.Integer)
 
 
 # filled when init system
@@ -75,9 +76,9 @@ class ModeCategory(db.Model):
 class DnnModel(db.Model):
     __tablename__ = "dnnModel"
     id = db.Column(db.Integer, primary_key=True)
-    category_id = db.Column(db.Integer)
-    model_id = db.Column(db.Integer)
-    gpu_id = db.Column(db.Integer)
+    category = db.Column(db.String)
+    classes = db.Column(db.String)  # use whitespace to split class names
+    weight = db.Column(db.String)
 
 
 # filled when init system
@@ -91,6 +92,7 @@ class Location(db.Model):
 class VirtualGpu(db.Model):
     __tablename__ = "virtualGpu"
     id = db.Column(db.Integer, primary_key=True)
+    used = db.Column(db.Boolean)
 
 
 # filled when submit device settings
@@ -102,8 +104,7 @@ class DeviceLocation(db.Model):
 
 
 # system status(running training or erroring...)
-class Status(db.Model):
-    __tablename__ = "status"
+class SystemStatus(db.Model):
+    __tablename__ = "systemStatus"
     id = db.Column(db.Integer, primary_key=True)
-    status = db.Column(db.String, default='running')
-    client = db.Column(db.Integer)
+    status = db.Column(db.String, default="running")

@@ -12,8 +12,8 @@
   <div id="dashboard-analytics">
     <vs-row
       vs-justify="center"
-      v-for="(deviceLine, index) in deviceListShow"
-      :key="index"
+      v-for="(num, idx) of parseInt(deviceNum / 5)"
+      :key="idx"
     >
       <vs-col
         type="flex"
@@ -22,7 +22,7 @@
         vs-w="2"
         vs-xs="12"
         class="cardx"
-        v-for="(device, index) in deviceLine"
+        v-for="(device, index) of deviceList.slice(idx * 5, (idx + 1) * 5)"
         :key="index"
       >
         <vs-card class="bg-dark">
@@ -76,6 +76,7 @@ export default {
     return {
       deviceListShow: [],
       deviceList: [],
+      deviceNum: 0,
       hls: ""
     };
   },
@@ -95,7 +96,7 @@ export default {
           const hls = new Hls();
           const elem = document.getElementById(device.id);
           this.hls.push(hls);
-          hls.loadSource("http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8");
+          hls.loadSource(device.path);
           hls.attachMedia(elem);
           hls.on(Hls.Events.MANIFEST_PARSED, function() {
             elem.play();
@@ -109,8 +110,8 @@ export default {
       axios
         .get(path)
         .then(res => {
-          this.deviceListShow = res.data.deviceListShow;
           this.deviceList = res.data.deviceList;
+          this.deviceNum = res.data.deviceNum;
         })
         .then(() => {
           this.loadVideoFn();

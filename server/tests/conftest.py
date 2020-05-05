@@ -1,5 +1,4 @@
 from server import create_app
-from server.extensions import db
 import pytest
 
 
@@ -9,5 +8,5 @@ def test_app():
     context = app.app_context()
     context.push()
     yield app
-    drop_all()
+    app.drop_all()
     context.pop()

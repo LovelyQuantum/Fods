@@ -1,6 +1,7 @@
 from flask import jsonify, request
 from flask.views import MethodView
-from server.models import Device, FodRecord
+from server.extensions import db
+from server.models import Device, FodRecord, FodCfg, BddCfg
 from datetime import datetime, timedelta
 from sqlalchemy import or_
 import numpy as np
@@ -28,6 +29,7 @@ class DeviceInfoAPI(MethodView):
             }
             for device in Device.query.order_by(Device.id).all()
         ]
+        response["deviceNum"] = len(response["deviceList"])
         if response["deviceList"]:
             response["status"] = "success"
         return jsonify(response)
@@ -67,7 +69,9 @@ class FodRecordAPI(MethodView):
                 {
                     "id": record.id,
                     "timestamp": record.timestamp,
-                    "deviceName": Device.query.filter_by(id=record.device_id)[0].name,
+                    "deviceName": Device.query.filter_by(id=record.device_id)
+                    .first()
+                    .name,
                     "status": record.status,
                 }
                 for Id, record in enumerate(
@@ -166,4 +170,67 @@ class FodRecordReportAPI(MethodView):
                 },
             ]
 
+        return jsonify(response)
+
+
+class DeviceSettingAPI(MethodView):
+    # FIXME get device id from backend not from url
+    def get(self):
+        response = {"status": "success"}
+        device = Device.query.filter_by(
+            id=int(request.args.get("device_name")[-2:])
+        ).first()
+        response["path"] = (
+            f"rtsp://{device.username}:{device.password}"
+            f"@{device.ip}:554/Streaming/Channels/1"
+        )
+        return jsonify(response)
+
+    def post(self):
+        response = {"status": "success"}
+        data = request.get_json()
+        if not Device.query.filter_by(id=int(data["device"]["id"][-2:])).scalar():
+            response = {"status": "fail"}
+            return jsonify(response)
+        else:
+            device = Device.query.filter_by(id=int(data["device"]["id"][-2:])).first()
+            device.name = data["device"]["name"]
+            device.username = data["device"]["username"]
+            device.ip = data["device"]["ip"]
+            device.password = data["device"]["password"]
+
+        if "fod" in data["func"]:
+            if not FodCfg.query.filter_by(
+                device_id=int(data["device"]["id"][-2:])
+            ).scalar():
+                fodcfg = FodCfg(
+                    device_id=data["device"]["id"][-2:],
+                    n_warning_threshold=int(data["fodCfg"]["nWarningThreshold"]),
+                    ex_warning_threshold=int(data["fodCfg"]["exWarningThreshold"]),
+                )
+                db.session.add(fodcfg)
+            else:
+                fodcfg = FodCfg.query.filter_by(
+                    device_id=int(data["device"]["id"][-2:])
+                ).first()
+                fodcfg.n_warning_threshold = (int(data["fodCfg"]["nWarningThreshold"]),)
+                fodcfg.ex_warning_threshold = (
+                    int(data["fodCfg"]["exWarningThreshold"]),
+                )
+
+        if "bdd" in data["func"]:
+            if not BddCfg.query.filter_by(
+                device_id=int(data["device"]["id"][-2:])
+            ).scalar():
+                bddcfg = BddCfg(
+                    device_id=data["device"]["id"][-2:],
+                    offset_distance=int(data["bddCfg"]["offsetDistance"]),
+                )
+                db.session.add(bddcfg)
+            else:
+                bddcfg = BddCfg.query.filter_by(
+                    device_id=int(data["device"]["id"][-2:])
+                ).first()
+                bddcfg.offset_distance = (int(data["bddCfg"]["offsetDistance"]),)
+        db.session.commit()
         return jsonify(response)

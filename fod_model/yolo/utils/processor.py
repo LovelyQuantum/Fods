@@ -13,10 +13,13 @@ from pymemcache import serde
 import tensorflow as tf
 from yolov3_tf2.models import YoloV3
 from yolov3_tf2.utils import draw_outputs
-from utils.models import get_gpu_mem, transform_image
+from utils.methods import get_gpu_mem, transform_image
 from time import time, sleep
 
+
 # FIXME limit detector number in flask
+
+# need camera url, weights path, classes
 status_register = Client(
     ("status_register", 12001),
     serializer=serde.python_memcache_serializer,
@@ -61,13 +64,13 @@ def detector(camera):
             return
 
     with tf.device(f"/physical_device:GPU:{camera['gpu_num']}"):
-        yolo = YoloV3(classes=FLAGS.num_classes)
-        yolo.load_weights(FLAGS.weights)
-        class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
+        yolo = YoloV3(classes=len(camera["dnn_cfg"]["classes"].split()))
+        yolo.load_weights(camera["dnn_cfg"]["weight"])
+        class_names = camera["dnn_cfg"]["classes"].split()
 
         while True:
-            img_in = image_register_A.get(camera["id"])
-            img_in = transform_image(img_in, 416)
+            img = image_register_A.get(camera["id"])
+            img_in = transform_image(img, 416)
             boxes, scores, classes, nums = yolo.predict(img_in)
             img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
 
@@ -81,5 +84,5 @@ def transfer(camera):
 
 config = {
     "transfer": transfer,
-    "detector": transfer,
+    "detector": detector,
 }
