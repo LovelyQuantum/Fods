@@ -28,24 +28,30 @@ services:
 
   server:
     container_name: server
-    image: registry.cn-hangzhou.aliyuncs.com/hina/server:v1.0
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/server:2.0.0
     depends_on:
       - db
       - status_register
     command: gunicorn -k gevent -w 5 -b server:8000 browse_web:app
 
   nginx:
-    image: registry.cn-hangzhou.aliyuncs.com/hina/nginx:v1.0
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/nginx:2.0.0
     container_name: nginx
     ports:
       - "80:80"
-      - "8080:8080"
+      - "8081:8081"
+      - "8082:8082"
     depends_on:
       - server
 
-  yolo:
+  web:
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:2.0.0
+    container_name: web
+    depends_on: nginx
+
+  fod_model:
     container_name: yolo
-    image: registry.cn-hangzhou.aliyuncs.com/hina/yolo:v0.9
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/fod_model:2.0.0
     runtime: nvidia
     depends_on:
       - status_register
