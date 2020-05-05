@@ -20,9 +20,6 @@ from sqlalchemy.orm import sessionmaker
 from pymemcache.client.base import Client
 
 
-# read class number from db?
-# get weights(yolov3.tf) from db?
-# get camera url from db
 load_dotenv()
 engine = create_engine(os.getenv("DB_URL"))
 Session = sessionmaker(bind=engine)
@@ -43,27 +40,34 @@ if __name__ == "__main__":
             devices[index]["dnn_cfg"] = {
                 "weight": session.query(DnnModel).filter_by(id=1).first().weight,
                 "classes": session.query(DnnModel).filter_by(id=1).first().classes,
+                "virtual_gpu_id": session.query(DnnModel)
+                .filter_by(id=1)
+                .first()
+                .virtual_gpu_id,
             }
 
     print(devices)
-    # read_procs = [Process(target=reader, args=(device,)) for device in devices]
-    # send_procs = [Process(target=sender, args=(device,)) for device in devices]
-    # procs = [
-    #     Process(
-    #         target=config["detector"] if device["dnn_cfg"] else config["transfer"],
-    #         args=(device,),
-    #     )
-    #     for device in devices
-    # ]
+    read_procs = [Process(target=reader, args=(device,)) for device in devices]
+    send_procs = [Process(target=sender, args=(device,)) for device in devices]
+    procs = [
+        Process(
+            target=config["detector"] if device["dnn_cfg"] else config["transfer"],
+            args=(device,),
+        )
+        for device in devices
+    ]
 
-    # for read_proc in read_procs:
-    #     read_proc.start()
-    #     sleep(10)
+    for read_proc in read_procs:
+        read_proc.start()
+        sleep(15)
 
-    # for proc in procs:
-    #     proc.start()
-    #     sleep(10)
+    for proc in procs:
+        proc.start()
+        sleep(15)
 
-    # for send_proc in send_procs:
-    #     send_proc.start()
-    #     sleep(10)
+    for send_proc in send_procs:
+        send_proc.start()
+        sleep(15)
+
+    while True:
+        sleep(1)

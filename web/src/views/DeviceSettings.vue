@@ -218,7 +218,7 @@ export default {
         path: ""
       },
       fodCfg: { nWarningThreshold: 400, exWarningThreshold: 800 },
-      bddCfg: { offsetDistance: 10 },
+      bddCfg: { offsetDistance: 30 },
       switchs: [],
       showTabs: false
     };
@@ -253,6 +253,10 @@ export default {
       });
     },
     deviceInfoQuery() {
+      this.switchs = [];
+      this.fodCfg.nWarningThreshold = 400;
+      this.fodCfg.exWarningThreshold = 800;
+      this.bddCfg.offsetDistance = 30;
       const path = "http://192.168.43.69:7101/apis/device_setting";
       axios
         .get(path, {
@@ -261,7 +265,20 @@ export default {
           }
         })
         .then(res => {
-          this.device.path = res.data.path;
+          this.device.path = res.data.device.path;
+          this.device.name = res.data.device.name;
+          this.device.username = res.data.device.username;
+          this.device.ip = res.data.device.ip;
+          this.device.password = res.data.device.password;
+          if (res.data.fodCfg) {
+            this.switchs.push("fod");
+            this.fodCfg.nWarningThreshold = res.data.fodCfg.nWarningThreshold;
+            this.fodCfg.exWarningThreshold = res.data.fodCfg.exWarningThreshold;
+          }
+          if (res.data.bddCfg) {
+            this.switchs.push("bdd");
+            this.bddCfg.offsetDistance = res.data.bddCfg.offsetDistance;
+          }
         })
         .then(() => {
           this.loadPreviewVideo();

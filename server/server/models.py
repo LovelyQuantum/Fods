@@ -51,8 +51,8 @@ class FodRecord(db.Model):
     dnn_model_id = db.Column(db.Integer, default=1)
     status = db.Column(db.String)
     storage_path = db.Column(db.String)
-    tags = db.Column(db.String)
-    areas = db.Column(db.String)
+    tags = db.Column(db.String, default="")
+    areas = db.Column(db.String, default="")
 
 
 # Belt deviation detection

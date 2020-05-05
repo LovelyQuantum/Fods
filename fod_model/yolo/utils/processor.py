@@ -13,13 +13,10 @@ from pymemcache import serde
 import tensorflow as tf
 from yolov3_tf2.models import YoloV3
 from yolov3_tf2.utils import draw_outputs
-from utils.methods import get_gpu_mem, transform_image
+from utils.methods import transform_image
 from time import time, sleep
 
 
-# FIXME limit detector number in flask
-
-# need camera url, weights path, classes
 status_register = Client(
     ("status_register", 12001),
     serializer=serde.python_memcache_serializer,
@@ -42,7 +39,6 @@ image_register_B = Client(
 physical_devices = tf.config.list_physical_devices("GPU")
 if len(physical_devices) > 0:
     for i in range(len(physical_devices)):
-        # tf.config.experimental.set_memory_growth(physical_devices[i], True)
         tf.config.set_logical_device_configuration(
             physical_devices[i],
             [
@@ -51,19 +47,11 @@ if len(physical_devices) > 0:
                 tf.config.LogicalDeviceConfiguration(memory_limit=3072),
             ],
         )
+logical_devices = tf.config.list_logical_devices("GPU")
 
 
 def detector(camera):
-    for i in range(len(physical_devices)):
-        if get_gpu_mem(i) > 4 or (i == 0 and get_gpu_mem(i) > 6):
-            camera["gpu_num"] = i
-        else:
-            error_info = status_register.get("error_resgiter")
-            error_info += "GPU_OUT_OF_USE,"
-            status_register.set("error_resgiter", error_info)
-            return
-
-    with tf.device(f"/physical_device:GPU:{camera['gpu_num']}"):
+    with tf.device(logical_devices[camera["dnn_cfg"]["virtual_gpu_id"]].name):
         yolo = YoloV3(classes=len(camera["dnn_cfg"]["classes"].split()))
         yolo.load_weights(camera["dnn_cfg"]["weight"])
         class_names = camera["dnn_cfg"]["classes"].split()

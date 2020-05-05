@@ -35,8 +35,8 @@ class FodRecord(Base):
     dnn_model_id = Column(Integer, default=1)
     status = Column(String)
     storage_path = Column(String)
-    tags = Column(String)
-    areas = Column(String)
+    tags = Column(String, default="")
+    areas = Column(String, default="")
 
 
 # Belt deviation detection

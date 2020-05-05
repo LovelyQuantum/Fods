@@ -1,7 +1,7 @@
 from flask import jsonify, request
 from flask.views import MethodView
 from server.extensions import db
-from server.models import Device, FodRecord, FodCfg, BddCfg
+from server.models import Device, FodRecord, FodCfg, BddCfg, VirtualGpu
 from datetime import datetime, timedelta
 from sqlalchemy import or_
 import numpy as np
@@ -180,10 +180,30 @@ class DeviceSettingAPI(MethodView):
         device = Device.query.filter_by(
             id=int(request.args.get("device_name")[-2:])
         ).first()
-        response["path"] = (
-            f"rtsp://{device.username}:{device.password}"
-            f"@{device.ip}:554/Streaming/Channels/1"
-        )
+        fodcfg = FodCfg.query.filter_by(
+            device_id=int(request.args.get("device_name")[-2:])
+        ).first()
+        bddcfg = BddCfg.query.filter_by(
+            device_id=int(request.args.get("device_name")[-2:])
+        ).first()
+        response["device"] = {
+            "path": (
+                f"rtsp://{device.username}:{device.password}"
+                f"@{device.ip}:554/Streaming/Channels/1"
+            ),
+            "name": device.name,
+            "ip": device.ip,
+            "username": device.username,
+            "password": device.password,
+        }
+        if fodcfg:
+            response["fodCfg"] = {
+                "nWarningThreshold": fodcfg.n_warning_threshold,
+                "exWarningThreshold": fodcfg.ex_warning_threshold,
+            }
+        if bddcfg:
+            response["bddCfg"] = {"offsetDistance": bddcfg.offset_distance}
+
         return jsonify(response)
 
     def post(self):
@@ -200,23 +220,34 @@ class DeviceSettingAPI(MethodView):
             device.password = data["device"]["password"]
 
         if "fod" in data["func"]:
-            if not FodCfg.query.filter_by(
-                device_id=int(data["device"]["id"][-2:])
-            ).scalar():
-                fodcfg = FodCfg(
-                    device_id=data["device"]["id"][-2:],
-                    n_warning_threshold=int(data["fodCfg"]["nWarningThreshold"]),
-                    ex_warning_threshold=int(data["fodCfg"]["exWarningThreshold"]),
-                )
+            virtual_gpu = VirtualGpu.query.filter_by(used=False).first()
+            if virtual_gpu:
+                virtual_gpu.used = True
+                if not FodCfg.query.filter_by(
+                    device_id=int(data["device"]["id"][-2:])
+                ).scalar():
+                    fodcfg = FodCfg(
+                        device_id=data["device"]["id"][-2:],
+                        n_warning_threshold=int(data["fodCfg"]["nWarningThreshold"]),
+                        ex_warning_threshold=int(data["fodCfg"]["exWarningThreshold"]),
+                        virtual_gpu_id=virtual_gpu.id,
+                    )
+                else:
+                    fodcfg = FodCfg.query.filter_by(
+                        device_id=int(data["device"]["id"][-2:])
+                    ).first()
+                    fodcfg.n_warning_threshold = (
+                        int(data["fodCfg"]["nWarningThreshold"]),
+                    )
+                    fodcfg.ex_warning_threshold = (
+                        int(data["fodCfg"]["exWarningThreshold"]),
+                    )
+                db.session.add(virtual_gpu)
                 db.session.add(fodcfg)
             else:
-                fodcfg = FodCfg.query.filter_by(
-                    device_id=int(data["device"]["id"][-2:])
-                ).first()
-                fodcfg.n_warning_threshold = (int(data["fodCfg"]["nWarningThreshold"]),)
-                fodcfg.ex_warning_threshold = (
-                    int(data["fodCfg"]["exWarningThreshold"]),
-                )
+                response["status"] = "error"
+                response["error"] = "检测数量达到上限"
+                return jsonify(response)
 
         if "bdd" in data["func"]:
             if not BddCfg.query.filter_by(
@@ -226,11 +257,11 @@ class DeviceSettingAPI(MethodView):
                     device_id=data["device"]["id"][-2:],
                     offset_distance=int(data["bddCfg"]["offsetDistance"]),
                 )
-                db.session.add(bddcfg)
             else:
                 bddcfg = BddCfg.query.filter_by(
                     device_id=int(data["device"]["id"][-2:])
                 ).first()
                 bddcfg.offset_distance = (int(data["bddCfg"]["offsetDistance"]),)
+            db.session.add(bddcfg)
         db.session.commit()
         return jsonify(response)
