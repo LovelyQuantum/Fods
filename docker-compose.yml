@@ -16,9 +16,9 @@ services:
     image: memcached
     command: memcached -m 64 -p 12003 -I 4m
 
-  web:
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:2.0.0
-    container_name: web
+  # web:
+  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:2.0.0
+  #   container_name: web
 
   db:
     image: postgres
@@ -30,24 +30,24 @@ services:
       - POSTGRES_DB=yqdb
       - POSTGRES_PASSWORD=429526000
 
-  server:
-    container_name: server
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/server:2.0.0
-    depends_on:
-      - db
-      - status_register
-    command: gunicorn -k gevent -w 5 -b server:8000 server:app
+  # server:
+  #   container_name: server
+  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/server:2.0.0
+  #   depends_on:
+  #     - db
+  #     - status_register
+  #   command: gunicorn -k gevent -w 5 -b server:8000 wsgi:app
 
-  nginx:
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/nginx:2.0.0
-    container_name: nginx
-    ports:
-      - "10101:80"
-      - "8081:8081"
-      - "8082:8082"
-    depends_on:
-      - server
-      - web
+  # nginx:
+  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/nginx:2.0.0
+  #   container_name: nginx
+  #   ports:
+  #     - "10101:80"
+  #     - "8081:8081"
+  #     - "8082:8082"
+  #   depends_on:
+  #     - server
+  #     - web
 
   fod_model:
     container_name: yolo
@@ -58,9 +58,12 @@ services:
       - image_register_A
       - image_register_B
       - db
-      - nginx
     command: python yolo.py
 
 volumes:
   yd_data:
     external: true
+
+networks: 
+  default:
+    name: yuhao_network
