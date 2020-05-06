@@ -108,12 +108,12 @@ export default [
         name: "系统配置",
         icon: "SettingsIcon"
       },
-      {
-        url: "/system/info",
-        slug: "system-info",
-        name: "系统信息",
-        icon: "InfoIcon"
-      }
+      // {
+      //   url: "/system/info",
+      //   slug: "system-info",
+      //   name: "系统信息",
+      //   icon: "InfoIcon"
+      // }
     ]
   }
 ];

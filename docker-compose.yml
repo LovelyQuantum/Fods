@@ -16,6 +16,10 @@ services:
     image: memcached
     command: memcached -m 64 -p 12003 -I 4m
 
+  web:
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:2.0.0
+    container_name: web
+
   db:
     image: postgres
     container_name: postgres
@@ -23,7 +27,7 @@ services:
       - yd_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=quantum
-      - POSTGRES_DB=mydb
+      - POSTGRES_DB=yqdb
       - POSTGRES_PASSWORD=429526000
 
   server:
@@ -32,7 +36,7 @@ services:
     depends_on:
       - db
       - status_register
-    command: gunicorn -k gevent -w 5 -b server:8000 browse_web:app
+    command: gunicorn -k gevent -w 5 -b server:8000 server:app
 
   nginx:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/nginx:2.0.0
@@ -43,11 +47,7 @@ services:
       - "8082:8082"
     depends_on:
       - server
-
-  web:
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:2.0.0
-    container_name: web
-    depends_on: nginx
+      - web
 
   fod_model:
     container_name: yolo

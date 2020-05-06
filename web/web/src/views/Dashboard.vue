@@ -12,7 +12,7 @@
   <div id="dashboard-analytics">
     <vs-row
       vs-justify="center"
-      v-for="(num, idx) of parseInt(deviceNum / 5)"
+      v-for="(num, idx) of parseInt(deviceNum / 5 + 1)"
       :key="idx"
     >
       <vs-col
@@ -31,7 +31,7 @@
           </div>
           <div slot="media">
             <video
-              :id="device.id"
+              :id="device.name"
               height="100%"
               width="100%"
               muted
@@ -47,7 +47,7 @@
                   $router
                     .push({
                       name: 'device-camera',
-                      params: { camera_id: device.id }
+                      params: { camera_id: device.name }
                     })
                     .catch(() => {})
                 "
@@ -56,7 +56,7 @@
               <vs-button
                 color="danger"
                 type="gradient"
-                @click="fullScreen(device.id)"
+                @click="fullScreen(device.name)"
                 >全屏</vs-button
               >
             </vs-row>
@@ -94,7 +94,7 @@ export default {
         this.hls = [];
         for (let device of this.deviceList) {
           const hls = new Hls();
-          const elem = document.getElementById(device.id);
+          const elem = document.getElementById(device.name);
           this.hls.push(hls);
           hls.loadSource(device.path);
           hls.attachMedia(elem);

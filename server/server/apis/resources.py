@@ -5,6 +5,8 @@ from server.models import Device, FodRecord, FodCfg, BddCfg, VirtualGpu
 from datetime import datetime, timedelta
 from sqlalchemy import or_
 import numpy as np
+import os
+import psutil
 
 
 class TestAPI(MethodView):
@@ -23,9 +25,9 @@ class DeviceInfoAPI(MethodView):
         response = {"status": "device not found"}
         response["deviceList"] = [
             {
-                "id": f"camera{str(device.id).zfill(2)}",
-                "path": f"rtsp://{device.username}:{device.password}"
-                f"@{device.ip}:554/Streaming/Channels/1",
+                "id": device.id,
+                "name": f"camera{str(device.id).zfill(2)}",
+                "path": "http://192.168.20.25:8081/hls/device" + device.id + ".m3u8",
             }
             for device in Device.query.order_by(Device.id).all()
         ]
@@ -264,4 +266,18 @@ class DeviceSettingAPI(MethodView):
                 bddcfg.offset_distance = (int(data["bddCfg"]["offsetDistance"]),)
             db.session.add(bddcfg)
         db.session.commit()
+        return jsonify(response)
+
+
+class SystemInfoAPI(MethodView):
+    def get(self):
+        response = {"status": "success"}
+        response["systemUpDay"] = (
+            datetime.now()
+            - datetime.fromtimestamp(psutil.Process(os.getpid()).create_time())
+        ).days
+        response["warmingTimes"] = FodRecord.query.count()
+        response["exWarmingTimes"] = FodRecord.query.filter(
+            or_(FodRecord.status == "严重", FodRecord.status == "severe",)
+        ).count()
         return jsonify(response)

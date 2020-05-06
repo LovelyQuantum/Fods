@@ -9,8 +9,6 @@
 """
 from pymemcache.client.base import Client
 from pymemcache import serde
-import cv2
-import sys
 import subprocess as sp
 
 image_register_B = Client(
@@ -20,7 +18,7 @@ image_register_B = Client(
 )
 
 
-def sender(camera):
+def sender(device):
     command = [
         "ffmpeg",
         "-re",
@@ -41,10 +39,10 @@ def sender(camera):
         "h264",
         "-f",
         "flv",
-        f"rtmp://nginx/show/device{camera['id']}",
+        f"rtmp://nginx/show/device{device['id']}",
     ]
 
     pipe = sp.Popen(command, stdin=sp.PIPE)
     while True:
-        img = image_register_B.get(camera["id"])
+        img = image_register_B.get(device["id"])
         pipe.stdin.write(img.tostring())

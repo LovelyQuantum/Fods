@@ -22,14 +22,13 @@ image_register_A = Client(
 )
 
 
-def reader(camera):
-    camera_url = f"rtsp://{camera['username']}:{camera['password']}@{camera['ip']}:"
-    "554/h264/ch1/main/av_stream"
+def reader(device):
     # FIXME password are not safe now
+    device["url"] = ["rtsp://ws_rtsp_server/test"]
     command = [
         "ffmpeg",
         "-i",
-        camera_url,
+        device["url"],
         "-f",
         "image2pipe",
         "-pix_fmt",
@@ -45,9 +44,9 @@ def reader(camera):
         try:
             image = image.reshape((1280, 720, 3))
         except ValueError:
-            logging.warning(f"live string from {camera['ip']} broken!")
+            logging.warning(f"live string from {device['url']} broken!")
             sleep(5)
             pipe = sp.Popen(command, stdout=sp.PIPE)
         pipe.stdout.flush()
         image = cv2.resize(image, (640, 360))
-        image_register_A.set(camera["id"], image)
+        image_register_A.set(device["id"], image)

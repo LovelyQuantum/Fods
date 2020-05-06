@@ -16,7 +16,7 @@
           class="mb-base"
           icon="CpuIcon"
           icon-right
-          statistic="1天"
+          :statistic="systemUpDay"
           statisticTitle="系统运行时间"
         />
       </div>
@@ -39,7 +39,7 @@
           class="mb-base"
           icon="ActivityIcon"
           icon-right
-          statistic="154"
+          :statistic="warmingTimes"
           statisticTitle="预警次数"
           color="warning"
         />
@@ -51,7 +51,7 @@
           class="mb-base"
           icon="AlertOctagonIcon"
           icon-right
-          statistic="13"
+          :statistic="exWarmingTimes"
           statisticTitle="严重预警次数"
           color="danger"
         />
@@ -132,6 +132,9 @@ export default {
       dateRangeBegin: null,
       dateRangeEnd: null,
       recordQueryMessage: null,
+      systemUpDay: "0 天",
+      warmingTimes: "0 次",
+      exWarmingTimes: "0 次",
       recordSeries: {},
       chartOptions: {
         chart: {
@@ -218,6 +221,14 @@ export default {
       this.recordQueryMessage = null;
       this.recordSeriesQuery();
     },
+    systemInfoQuery() {
+      const path = "http://192.168.43.69:7101/apis/system_info";
+      axios.get(path).then(res => {
+        this.systemUpDay = res.data.systemUpDay + " 天";
+        this.warmingTimes = res.data.warmingTimes + "次";
+        this.exWarmingTimes = res.data.exWarmingTimes + "次";
+      });
+    },
 
     recordSeriesQuery() {
       const path = "http://192.168.43.69:7101/apis/fod_record_report";
@@ -255,7 +266,8 @@ export default {
     }
   },
   created() {
+    this.systemInfoQuery();
     this.recordSeriesQuery();
-  },
+  }
 };
 </script>

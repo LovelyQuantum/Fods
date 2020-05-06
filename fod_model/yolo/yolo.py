@@ -15,9 +15,10 @@ from utils.sender import sender
 from utils.processor import config
 from multiprocessing import Process
 from sqlalchemy import create_engine
-from utils.models import FodCfg, Device, DnnModel
+from utils.models import FodCfg, Device, DnnModel, VirtualGpu
 from sqlalchemy.orm import sessionmaker
 from pymemcache.client.base import Client
+import tensorflow as tf
 
 
 load_dotenv()
@@ -25,6 +26,12 @@ engine = create_engine(os.getenv("DB_URL"))
 Session = sessionmaker(bind=engine)
 session = Session()
 status_resgiter = Client(("status_resgiter", 12001))
+virtual_devices = tf.config.list_physical_devices("GPU") * 3
+for virtual_device in virtual_devices:
+    v_gpu = VirtualGpu(used=False)
+    session.add(v_gpu)
+session.commit()
+
 
 if __name__ == "__main__":
     devices = []

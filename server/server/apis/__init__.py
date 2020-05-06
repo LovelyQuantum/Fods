@@ -32,3 +32,8 @@ apis.add_url_rule(
     view_func=resources.DeviceSettingAPI.as_view("device_setting"),
     methods=["GET", "POST"],
 )
+apis.add_url_rule(
+    "/system_info",
+    view_func=resources.SystemInfoAPI.as_view("system_info"),
+    methods=["GET"],
+)
