@@ -10,3 +10,4 @@ gevent
 psutil
 flask-migrate
 numpy
+pymemcache

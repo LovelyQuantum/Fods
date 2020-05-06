@@ -67,12 +67,12 @@ def register_commands(app):
         click.echo("Initializing the database...")
         db.create_all()
 
+        dnn_model = DnnModel(
+            weight="./checkpoints/yolov3.tf", category="fod", classes="stone"
+        )
         for i in range(1):
             device = Device()
             db.session.add(device)
-        dnn_model = DnnModel(
-                weight="./checkpoints/yolov3.tf", category="fod", classes="stone"
-            )
         for i in range(6):
             device = VirtualGpu(used=False)
             db.session.add(device)

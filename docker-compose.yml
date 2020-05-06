@@ -1,6 +1,11 @@
 version: "2.4"
 
 services:
+  status_register:
+    container_name: status_register
+    image: memcached
+    command: memcached -m 2 -p 12001
+
   image_register_A:
     container_name: image_register_A
     image: memcached

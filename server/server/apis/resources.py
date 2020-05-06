@@ -3,10 +3,19 @@ from flask.views import MethodView
 from server.extensions import db
 from server.models import Device, FodRecord, FodCfg, BddCfg, VirtualGpu
 from datetime import datetime, timedelta
+from pymemcache.client.base import Client
+from pymemcache import serde
 from sqlalchemy import or_
 import numpy as np
 import os
 import psutil
+
+
+status_register = Client(
+    ("status_register", 12001),
+    serializer=serde.python_memcache_serializer,
+    deserializer=serde.python_memcache_deserializer,
+)
 
 
 class TestAPI(MethodView):
@@ -225,33 +234,29 @@ class DeviceSettingAPI(MethodView):
             if not FodCfg.query.filter_by(
                 device_id=int(data["device"]["id"][-2:])
             ).scalar():
-                fodcfg = FodCfg(
-                    device_id=data["device"]["id"][-2:],
-                    n_warning_threshold=int(data["fodCfg"]["nWarningThreshold"]),
-                    ex_warning_threshold=int(data["fodCfg"]["exWarningThreshold"]),
-                    virtual_gpu_id=virtual_gpu.id,
-                )
                 virtual_gpu = VirtualGpu.query.filter_by(used=False).first()
                 if virtual_gpu:
                     virtual_gpu.used = True
-                    session.add(virtual_gpu)
+                    db.session.add(virtual_gpu)
+                    fodcfg = FodCfg(
+                        device_id=data["device"]["id"][-2:],
+                        n_warning_threshold=int(data["fodCfg"]["nWarningThreshold"]),
+                        ex_warning_threshold=int(data["fodCfg"]["exWarningThreshold"]),
+                        virtual_gpu_id=virtual_gpu.id,
+                    )
                 else:
                     response["status"] = "error"
                     response["error"] = "检测数量达到上限"
                     return jsonify(response)
 
-
             else:
                 fodcfg = FodCfg.query.filter_by(
                     device_id=int(data["device"]["id"][-2:])
                 ).first()
-                fodcfg.n_warning_threshold = (
-                    int(data["fodCfg"]["nWarningThreshold"]),
-                )
+                fodcfg.n_warning_threshold = (int(data["fodCfg"]["nWarningThreshold"]),)
                 fodcfg.ex_warning_threshold = (
                     int(data["fodCfg"]["exWarningThreshold"]),
                 )
-            db.session.add(virtual_gpu)
             db.session.add(fodcfg)
 
         if "bdd" in data["func"]:
@@ -269,6 +274,7 @@ class DeviceSettingAPI(MethodView):
                 bddcfg.offset_distance = (int(data["bddCfg"]["offsetDistance"]),)
             db.session.add(bddcfg)
         db.session.commit()
+        status_register.set(f"{device.id}", "changed")
         return jsonify(response)
 
 
