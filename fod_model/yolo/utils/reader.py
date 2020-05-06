@@ -14,6 +14,7 @@ from time import sleep
 import logging
 import cv2
 import numpy as np
+import sys
 
 image_register_A = Client(
     ("image_register_A", 12002),
@@ -40,9 +41,9 @@ def reader(device):
     pipe = sp.Popen(command, stdout=sp.PIPE)
     while True:
         raw_image = pipe.stdout.read(1280 * 720 * 3)
-        image = np.fromstring(raw_image, dtype="uint8")
         try:
-            image = image.reshape((1280, 720, 3))
+            image = np.fromstring(raw_image, dtype='uint8')
+            image = image.reshape((720, 1280, 3))
         except ValueError:
             logging.warning(f"live string from {device['url']} broken!")
             sleep(5)
