@@ -250,6 +250,13 @@ class DeviceSettingAPI(MethodView):
                 response["status"] = "error"
                 response["error"] = "检测数量达到上限"
                 return jsonify(response)
+        elif FodCfg.query.filter_by(
+                    device_id=int(data["device"]["id"][-2:])
+                ).scalar():
+                db.session.delete(FodCfg.query.filter_by(
+                    device_id=int(data["device"]["id"][-2:])
+                ).first())
+                db.session.commit()
 
         if "bdd" in data["func"]:
             if not BddCfg.query.filter_by(

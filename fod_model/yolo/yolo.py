@@ -20,15 +20,18 @@ from pymemcache.client.base import Client
 import tensorflow as tf
 
 
-engine = create_engine("postgresql://quantum:429526000@yolo_test_use_postgresql/testdb")
+engine = create_engine("postgresql://quantum:429526000@postgres/yqdb")
+# engine = create_engine(os.getenv("DB_URL"))
 Session = sessionmaker(bind=engine)
 session = Session()
 status_resgiter = Client(("status_resgiter", 12001))
-virtual_devices = tf.config.list_physical_devices("GPU") * 3
-for virtual_device in virtual_devices:
-    v_gpu = VirtualGpu(used=False)
-    session.add(v_gpu)
-session.commit()
+virtual_devices = len(tf.config.list_physical_devices("GPU")) * 3
+print(f"virtual_devices num: {virtual_devices}\n\n\n")
+# VirtualGpu.__table__.drop()
+# for _ in range(virtual_devices):
+#     v_gpu = VirtualGpu(used=False)
+#     session.add(v_gpu)
+# session.commit()
 
 
 if __name__ == "__main__":
@@ -45,8 +48,8 @@ if __name__ == "__main__":
             devices[index]["dnn_cfg"] = {
                 "weight": session.query(DnnModel).filter_by(id=1).first().weight,
                 "classes": session.query(DnnModel).filter_by(id=1).first().classes,
-                "virtual_gpu_id": session.query(DnnModel)
-                .filter_by(id=1)
+                "virtual_gpu_id": session.query(FodCfg)
+                .filter_by(device_id=device.id)
                 .first()
                 .virtual_gpu_id,
             }
@@ -62,17 +65,17 @@ if __name__ == "__main__":
         for device in devices
     ]
 
-    for read_proc in read_procs:
-        read_proc.start()
-        sleep(15)
+    # for read_proc in read_procs:
+    #     read_proc.start()
+    #     sleep(15)
 
     for proc in procs:
         proc.start()
         sleep(15)
 
-    for send_proc in send_procs:
-        send_proc.start()
-        sleep(15)
+    # for send_proc in send_procs:
+    #     send_proc.start()
+    #     sleep(15)
 
     while True:
         sleep(1)

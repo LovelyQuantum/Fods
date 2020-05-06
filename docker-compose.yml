@@ -28,16 +28,16 @@ services:
       - POSTGRES_DB=yqdb
       - POSTGRES_PASSWORD=429526000
 
-  # server:
-  #   container_name: server
-  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/server:2.0.0
-  #   environment: 
-  #     - DATABASE_URL=postgresql://quantum:429526000@postgres/yqdb
-  #   depends_on:
-  #     - db
-  #   volumes:
-  #     - ./server:/server
-  #   command: gunicorn -k gevent -w 5 -b server:8000 wsgi:app
+  server:
+    container_name: server
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/server:2.0.0
+    environment: 
+      - DATABASE_URL=postgresql://quantum:429526000@postgres/yqdb
+    depends_on:
+      - db
+    volumes:
+      - ./server:/server
+    command: gunicorn -k gevent -w 5 -b server:8000 wsgi:app
 
   nginx:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/nginx:2.0.0

@@ -51,7 +51,7 @@ logical_devices = tf.config.list_logical_devices("GPU")
 
 
 def detector(device):
-    with tf.device(logical_devices[device["dnn_cfg"]["virtual_gpu_id"]].name):
+    with tf.device(logical_devices[device["dnn_cfg"]["virtual_gpu_id"] - 1].name):
         yolo = YoloV3(classes=len(device["dnn_cfg"]["classes"].split()))
         yolo.load_weights(device["dnn_cfg"]["weight"])
         class_names = device["dnn_cfg"]["classes"].split()

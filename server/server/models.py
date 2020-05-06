@@ -39,6 +39,7 @@ class FodCfg(db.Model):
     __tablename__ = "fodCfg"
     id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.Integer)
+    virtual_gpu_id = db.Column(db.Integer)
     n_warning_threshold = db.Column(db.Integer, default=10000)
     ex_warning_threshold = db.Column(db.Integer, default=40000)
 

@@ -3,7 +3,7 @@ import click
 from flask import Flask
 from server.settings import config
 from server.extensions import db, migrate
-from server.models import Device, DnnModel
+from server.models import Device, DnnModel, VirtualGpu
 from server.apis import apis
 
 
@@ -73,5 +73,8 @@ def register_commands(app):
         dnn_model = DnnModel(
                 weight="./checkpoints/yolov3.tf", category="fod", classes="stone"
             )
+        for i in range(6):
+            device = VirtualGpu(used=False)
+            db.session.add(device)
         db.session.add(dnn_model)
         db.session.commit()

@@ -34,7 +34,7 @@ vuexy-shell-scripts
 
 # python
 # Byte-compiled / optimized / DLL files
-
+.flaskenv
 __pycache__/
 *.py[cod]
 *$py.class

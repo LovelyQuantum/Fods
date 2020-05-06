@@ -23,6 +23,7 @@ class FodCfg(Base):
     __tablename__ = "fodCfg"
     id = Column(Integer, primary_key=True)
     device_id = Column(Integer)
+    virtual_gpu_id = Column(Integer)
     n_warning_threshold = Column(Integer, default=10000)
     ex_warning_threshold = Column(Integer, default=40000)
 
