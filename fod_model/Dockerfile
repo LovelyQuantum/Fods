@@ -3,6 +3,8 @@ COPY ./yolo /yolo
 COPY ./sources.list /etc/apt/sources.list
 WORKDIR /yolo
 RUN apt-get update \
+    && pip config set global.index-url http://mirrors.aliyun.com/pypi/simple \
+    && pip config set install.trusted-host mirrors.aliyun.com \
     && apt-get install -y python-psycopg2 libpq-dev libsm6 libxext6 libxrender-dev ffmpeg \
-    && pip install -U pip -i https://pypi.tuna.tsinghua.edu.cn/simple \
-    && pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+    && pip install -U pip \
+    && pip install -r requirements.txt

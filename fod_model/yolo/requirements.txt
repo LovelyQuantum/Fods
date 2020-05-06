@@ -3,3 +3,4 @@ opencv-python
 pymemcache
 sqlalchemy
 psycopg2
+python-dotenv
