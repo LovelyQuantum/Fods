@@ -9,7 +9,6 @@
 """
 import os
 from time import sleep
-from dotenv import load_dotenv
 from utils.reader import reader
 from utils.sender import sender
 from utils.processor import config
@@ -21,8 +20,7 @@ from pymemcache.client.base import Client
 import tensorflow as tf
 
 
-load_dotenv()
-engine = create_engine(os.getenv("DB_URL"))
+engine = create_engine("postgresql://quantum:429526000@yolo_test_use_postgresql/testdb")
 Session = sessionmaker(bind=engine)
 session = Session()
 status_resgiter = Client(("status_resgiter", 12001))
@@ -38,7 +36,7 @@ if __name__ == "__main__":
     for index, device in enumerate(session.query(Device).order_by(Device.id)):
         devices.append(
             {
-                "id": device.id,
+                "id": f"{device.id}",
                 "url": f"rtsp://{device.username}:{device.password}"
                 f"@{device.ip}:554/Streaming/Channels/1",
             }

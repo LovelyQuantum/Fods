@@ -1,0 +1,14 @@
+providers:
+  file:
+    directory: "/etc/traefik"
+    filename: "dynamic.yml"
+    watch: true
+
+log:
+  level: DEBUG
+
+entryPoints:
+  web:
+    address: ":80"
+  server:
+    address: ":8081"

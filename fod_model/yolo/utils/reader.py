@@ -24,7 +24,7 @@ image_register_A = Client(
 
 def reader(device):
     # FIXME password are not safe now
-    device["url"] = ["rtsp://ws_rtsp_server/test"]
+    device["url"] = "rtsp://ws_rtsp_server/test"
     command = [
         "ffmpeg",
         "-i",

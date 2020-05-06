@@ -1,11 +1,6 @@
 version: "2.4"
 
 services:
-  status_register:
-    container_name: status_register
-    image: memcached
-    command: memcached -m 16 -p 12001
-
   image_register_A:
     container_name: image_register_A
     image: memcached
@@ -19,12 +14,15 @@ services:
   # web:
   #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:2.0.0
   #   container_name: web
+  #   volumes:
+  #     - ./web/web:/web
+  #   command: npm run serve -- --port 8000
 
   db:
     image: postgres
     container_name: postgres
     volumes:
-      - yd_data:/var/lib/postgresql/data
+      - yq_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=quantum
       - POSTGRES_DB=yqdb
@@ -33,35 +31,47 @@ services:
   # server:
   #   container_name: server
   #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/server:2.0.0
+  #   environment: 
+  #     - DATABASE_URL=postgresql://quantum:429526000@postgres/yqdb
   #   depends_on:
   #     - db
-  #     - status_register
+  #   volumes:
+  #     - ./server:/server
   #   command: gunicorn -k gevent -w 5 -b server:8000 wsgi:app
 
-  # nginx:
-  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/nginx:2.0.0
-  #   container_name: nginx
-  #   ports:
+  nginx:
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/nginx:2.0.0
+    container_name: nginx
+    ports:
+      - "8082:8082"
+
+  # traefik:
+  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/traefik:2.0.0
+  #   container_name: traefik
+  #   ports: 
   #     - "10101:80"
   #     - "8081:8081"
-  #     - "8082:8082"
   #   depends_on:
-  #     - server
   #     - web
+  #     - server
 
   fod_model:
     container_name: yolo
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/fod_model:2.0.0
     runtime: nvidia
+    environment: 
+      - NVIDIA_VISIBLE_DEVICES=6,7
     depends_on:
-      - status_register
       - image_register_A
       - image_register_B
       - db
+      - nginx
+    volumes:
+      - ./fod_model/yolo:/yolo
     command: python yolo.py
 
 volumes:
-  yd_data:
+  yq_data:
     external: true
 
 networks: 

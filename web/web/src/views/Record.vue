@@ -143,7 +143,7 @@ export default {
     },
 
     recordQuery() {
-      const path = "http://192.168.43.69:7101/apis/fod_record";
+      const path = "http://192.168.43.69:8081/apis/fod_record";
       const data = {
         dateRange: {
           dateRangeBegin: this.dateRangeBegin,
@@ -164,7 +164,7 @@ export default {
       } else {
         this.activeLine = tr;
         this.previewPopupActive = true;
-        const path = "http://192.168.43.69:7101/apis/fod_record_preview";
+        const path = "http://192.168.43.69:8081/apis/fod_record_preview";
         const data = { recordId: tr.id };
         axios.post(path, data).then(res => {
           this.previewSrc = res.data.previewSrc;

@@ -50,23 +50,23 @@ if len(physical_devices) > 0:
 logical_devices = tf.config.list_logical_devices("GPU")
 
 
-def detector(camera):
-    with tf.device(logical_devices[camera["dnn_cfg"]["virtual_gpu_id"]].name):
-        yolo = YoloV3(classes=len(camera["dnn_cfg"]["classes"].split()))
-        yolo.load_weights(camera["dnn_cfg"]["weight"])
-        class_names = camera["dnn_cfg"]["classes"].split()
+def detector(device):
+    with tf.device(logical_devices[device["dnn_cfg"]["virtual_gpu_id"]].name):
+        yolo = YoloV3(classes=len(device["dnn_cfg"]["classes"].split()))
+        yolo.load_weights(device["dnn_cfg"]["weight"])
+        class_names = device["dnn_cfg"]["classes"].split()
 
         while True:
-            img = image_register_A.get(camera["id"])
+            img = image_register_A.get(device["id"])
             img_in = transform_image(img, 416)
             boxes, scores, classes, nums = yolo.predict(img_in)
             img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
 
 
-def transfer(camera):
+def transfer(device):
     while True:
         start_time = time()
-        image_register_B.set(camera["id"], image_register_A.get(camera["id"]))
+        image_register_B.set(device["id"], image_register_A.get(device["id"]))
         sleep(0.04 - ((time() - start_time) % 0.04))
 
 
