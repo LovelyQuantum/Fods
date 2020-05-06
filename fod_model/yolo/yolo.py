@@ -58,7 +58,7 @@ if __name__ == "__main__":
     send_procs = [Process(target=sender, args=(device,)) for device in devices]
     procs = [
         Process(
-            target=config["detector"] if device["dnn_cfg"] else config["transfer"],
+            target=config["detector"] if device.get("dnn_cfg") else config["transfer"],
             args=(device,),
         )
         for device in devices
