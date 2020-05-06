@@ -222,41 +222,37 @@ class DeviceSettingAPI(MethodView):
             device.password = data["device"]["password"]
 
         if "fod" in data["func"]:
-            virtual_gpu = VirtualGpu.query.filter_by(used=False).first()
-            if virtual_gpu:
-                virtual_gpu.used = True
-                if not FodCfg.query.filter_by(
-                    device_id=int(data["device"]["id"][-2:])
-                ).scalar():
-                    fodcfg = FodCfg(
-                        device_id=data["device"]["id"][-2:],
-                        n_warning_threshold=int(data["fodCfg"]["nWarningThreshold"]),
-                        ex_warning_threshold=int(data["fodCfg"]["exWarningThreshold"]),
-                        virtual_gpu_id=virtual_gpu.id,
-                    )
+            if not FodCfg.query.filter_by(
+                device_id=int(data["device"]["id"][-2:])
+            ).scalar():
+                fodcfg = FodCfg(
+                    device_id=data["device"]["id"][-2:],
+                    n_warning_threshold=int(data["fodCfg"]["nWarningThreshold"]),
+                    ex_warning_threshold=int(data["fodCfg"]["exWarningThreshold"]),
+                    virtual_gpu_id=virtual_gpu.id,
+                )
+                virtual_gpu = VirtualGpu.query.filter_by(used=False).first()
+                if virtual_gpu:
+                    virtual_gpu.used = True
+                    session.add(virtual_gpu)
                 else:
-                    fodcfg = FodCfg.query.filter_by(
-                        device_id=int(data["device"]["id"][-2:])
-                    ).first()
-                    fodcfg.n_warning_threshold = (
-                        int(data["fodCfg"]["nWarningThreshold"]),
-                    )
-                    fodcfg.ex_warning_threshold = (
-                        int(data["fodCfg"]["exWarningThreshold"]),
-                    )
-                db.session.add(virtual_gpu)
-                db.session.add(fodcfg)
+                    response["status"] = "error"
+                    response["error"] = "检测数量达到上限"
+                    return jsonify(response)
+
+
             else:
-                response["status"] = "error"
-                response["error"] = "检测数量达到上限"
-                return jsonify(response)
-        elif FodCfg.query.filter_by(
+                fodcfg = FodCfg.query.filter_by(
                     device_id=int(data["device"]["id"][-2:])
-                ).scalar():
-                db.session.delete(FodCfg.query.filter_by(
-                    device_id=int(data["device"]["id"][-2:])
-                ).first())
-                db.session.commit()
+                ).first()
+                fodcfg.n_warning_threshold = (
+                    int(data["fodCfg"]["nWarningThreshold"]),
+                )
+                fodcfg.ex_warning_threshold = (
+                    int(data["fodCfg"]["exWarningThreshold"]),
+                )
+            db.session.add(virtual_gpu)
+            db.session.add(fodcfg)
 
         if "bdd" in data["func"]:
             if not BddCfg.query.filter_by(
