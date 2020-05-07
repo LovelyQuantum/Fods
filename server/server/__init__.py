@@ -21,7 +21,6 @@ def create_app(config_name=None):
     register_extensions(app)
     register_commands(app)
     register_shell_context(app)
-    # register_template_context(app)
     return app
 
 
@@ -68,13 +67,15 @@ def register_commands(app):
         db.create_all()
 
         dnn_model = DnnModel(
-            weight="./checkpoints/yolov3.tf", category="fod", classes="stone"
+            weight="./checkpoints/yolov3_train_15.tf", category="fod", classes="stone"
         )
-        for i in range(1):
+        db.session.add(dnn_model)
+        # change device num
+        for _ in range(10):
             device = Device()
             db.session.add(device)
-        for i in range(6):
-            device = VirtualGpu(used=False)
-            db.session.add(device)
-        db.session.add(dnn_model)
+        for index in range(2):
+            for _ in range(3):
+                v_gpu = VirtualGpu(used=False, gpu_id=index)
+                db.session.add(v_gpu)
         db.session.commit()

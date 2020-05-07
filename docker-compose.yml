@@ -16,13 +16,6 @@ services:
     image: memcached
     command: memcached -m 64 -p 12003 -I 4m
 
-  # web:
-  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:2.0.0
-  #   container_name: web
-  #   volumes:
-  #     - ./web/web:/web
-  #   command: npm run serve -- --port 8000
-
   db:
     image: postgres
     container_name: postgres
@@ -32,6 +25,13 @@ services:
       - POSTGRES_USER=quantum
       - POSTGRES_DB=yqdb
       - POSTGRES_PASSWORD=429526000
+
+  web:
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:2.0.0
+    container_name: web
+    volumes:
+      - ./web/web:/web
+    command: npm run serve -- --port 8000
 
   server:
     container_name: server
@@ -43,6 +43,7 @@ services:
     volumes:
       - ./server:/server
     command: gunicorn -k gevent -w 5 -b server:8000 wsgi:app
+    # command: flask init
 
   nginx:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/nginx:2.0.0
@@ -50,21 +51,21 @@ services:
     ports:
       - "8082:8082"
 
-  # traefik:
-  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/traefik:2.0.0
-  #   container_name: traefik
-  #   ports: 
-  #     - "10101:80"
-  #     - "8081:8081"
-  #   depends_on:
-  #     - web
-  #     - server
+  traefik:
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/traefik:2.0.0
+    container_name: traefik
+    ports: 
+      - "10101:80"
+      - "8081:8081"
+    depends_on:
+      - web
+      - server
 
   fod_model:
-    container_name: yolo
+    container_name: fod_model
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/fod_model:2.0.0
     runtime: nvidia
-    environment: 
+    environment:
       - NVIDIA_VISIBLE_DEVICES=6,7
     depends_on:
       - image_register_A
@@ -73,6 +74,7 @@ services:
       - nginx
     volumes:
       - ./fod_model/yolo:/yolo
+      - ./fod_model/photos:/yolo/photos
     command: python yolo.py
 
 volumes:

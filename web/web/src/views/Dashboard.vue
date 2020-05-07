@@ -27,7 +27,7 @@
       >
         <vs-card class="bg-dark">
           <div slot="header">
-            <h3>高清片源</h3>
+            <h3>{{device.deviceName}}</h3>
           </div>
           <div slot="media">
             <video
@@ -96,7 +96,7 @@ export default {
           const hls = new Hls();
           const elem = document.getElementById(device.name);
           this.hls.push(hls);
-          hls.loadSource(device.path);
+          hls.loadSource(device.sourcePath);
           hls.attachMedia(elem);
           hls.on(Hls.Events.MANIFEST_PARSED, function() {
             elem.play();

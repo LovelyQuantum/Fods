@@ -36,7 +36,8 @@ class DeviceInfoAPI(MethodView):
             {
                 "id": device.id,
                 "name": f"camera{str(device.id).zfill(2)}",
-                "path": f"http://192.168.43.69:8082/hls/device{device.id}.m3u8",
+                "sourcePath": f"http://192.168.43.69:8082/hls/device{device.id}.m3u8",
+                "deviceName": device.name,
             }
             for device in Device.query.order_by(Device.id).all()
         ]
@@ -198,7 +199,7 @@ class DeviceSettingAPI(MethodView):
             device_id=int(request.args.get("device_name")[-2:])
         ).first()
         response["device"] = {
-            "path": (
+            "sourcePath": (
                 f"rtsp://{device.username}:{device.password}"
                 f"@{device.ip}:554/Streaming/Channels/1"
             ),
@@ -258,6 +259,17 @@ class DeviceSettingAPI(MethodView):
                     int(data["fodCfg"]["exWarningThreshold"]),
                 )
             db.session.add(fodcfg)
+        else:
+            if FodCfg.query.filter_by(
+                device_id=int(data["device"]["id"][-2:])
+            ).scalar():
+                fod_cfg = FodCfg.query.filter_by(
+                    device_id=int(data["device"]["id"][-2:])
+                ).first()
+                v_gpu = VirtualGpu.query.filter_by(id=fod_cfg.virtual_gpu_id).first()
+                v_gpu.used = False
+                db.session.add(v_gpu)
+                db.session.delete(fod_cfg)
 
         if "bdd" in data["func"]:
             if not BddCfg.query.filter_by(

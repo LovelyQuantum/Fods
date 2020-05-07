@@ -265,7 +265,7 @@ export default {
           }
         })
         .then(res => {
-          this.device.path = res.data.device.path;
+          this.device.sourcePath = res.data.device.sourcePath;
           this.device.name = res.data.device.name;
           this.device.username = res.data.device.username;
           this.device.ip = res.data.device.ip;
@@ -289,7 +289,7 @@ export default {
       if (Hls.isSupported()) {
         const elem = document.getElementById("preview_video");
         this.previw_hls = new Hls();
-        this.previw_hls.loadSource(this.device.path);
+        this.previw_hls.loadSource(this.device.sourcePath);
         this.previw_hls.attachMedia(elem);
         this.previw_hls.on(Hls.Events.MANIFEST_PARSED, () => {
           elem.play(elem);

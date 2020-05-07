@@ -1,4 +1,3 @@
-import cv2
 import nvidia_smi
 import tensorflow as tf
 
@@ -11,10 +10,9 @@ def get_gpu_mem(gpu_num):
     return int(f"{(info.free / 2 ** 30):.2f}")
 
 
-def transform_image(camera, image):
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+def transform_image(image, size):
     image = tf.expand_dims(image, 0)
-    image = tf.image.resize_with_pad(image, (416, 416))
+    image = tf.image.resize(image, (size, size))
     # FIXME don't use numbers
     image = image / 255
     return image

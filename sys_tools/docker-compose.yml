@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  operator:
+    container_name: operator
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/sys_tools:2.0.0
+    environment:
+      - SYSTEM_CHECK=true
+
+      - DB_DROP_ALL=false
+      - DB_CREATE_TABLES=false
+      - DB_INIT=false
+      - DB_MIGRATION=false
+    command: python operator.py
+
+  db:
+    image: postgres
+    container_name: init_postgres
+    volumes:
+      - yq_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=quantum
+      - POSTGRES_DB=yqdb
+      - POSTGRES_PASSWORD=429526000
+
+volumes:
+  yq_data:
+    external: true

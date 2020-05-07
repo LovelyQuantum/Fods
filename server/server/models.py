@@ -93,6 +93,7 @@ class Location(db.Model):
 class VirtualGpu(db.Model):
     __tablename__ = "virtualGpu"
     id = db.Column(db.Integer, primary_key=True)
+    gpu_id = db.Column(db.Integer)
     used = db.Column(db.Boolean)
 
 
