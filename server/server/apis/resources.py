@@ -36,7 +36,7 @@ class DeviceInfoAPI(MethodView):
             {
                 "id": device.id,
                 "name": f"camera{str(device.id).zfill(2)}",
-                "sourcePath": f"http://192.168.43.69:8082/hls/device{device.id}.m3u8",
+                "sourcePath": f"http://192.168.20.25:8082/hls/device{device.id}.m3u8",
                 "deviceName": device.name,
             }
             for device in Device.query.order_by(Device.id).all()

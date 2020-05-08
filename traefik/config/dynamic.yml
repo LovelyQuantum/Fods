@@ -3,13 +3,13 @@ http:
     web:
       entryPoints:
         - "web"
-      rule: "Host(`192.168.43.69`)"
+      rule: "Host(`192.168.20.25`)"
       service: web
 
     server:
       entryPoints:
         - "server"
-      rule: "Host(`192.168.43.69`)"
+      rule: "Host(`192.168.20.25`)"
       service: server
 
   services:

@@ -4,21 +4,25 @@ services:
   status_register:
     container_name: status_register
     image: memcached
+    restart: always
     command: memcached -m 2 -p 12001
 
   image_register_A:
     container_name: image_register_A
     image: memcached
+    restart: always
     command: memcached -m 64 -p 12002 -I 4m
 
   image_register_B:
     container_name: image_register_B
     image: memcached
+    restart: always
     command: memcached -m 64 -p 12003 -I 4m
 
   db:
     image: postgres
     container_name: postgres
+    restart: always
     volumes:
       - yq_data:/var/lib/postgresql/data
     environment:
@@ -29,11 +33,13 @@ services:
   web:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:2.0.0
     container_name: web
+    restart: always
     command: npm run serve -- --port 8000
 
   server:
     container_name: server
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/server:2.0.0
+    restart: always
     environment: 
       - DATABASE_URL=postgresql://quantum:429526000@postgres/yqdb
     depends_on:
@@ -44,12 +50,14 @@ services:
   nginx:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/nginx:2.0.0
     container_name: nginx
+    restart: always
     ports:
       - "8082:8082"
 
   traefik:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/traefik:2.0.0
     container_name: traefik
+    restart: always
     ports: 
       - "80:80"
       - "8081:8081"
@@ -60,16 +68,15 @@ services:
   fod_model:
     container_name: fod_model
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/fod_model:2.0.0
+    restart: always
     runtime: nvidia
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=6,7
     depends_on:
       - image_register_A
       - image_register_B
       - db
       - nginx
     volumes:
-      - ./fod_model/photos:/yolo/photos
+      - ./records:/yolo/photos
     command: python yolo.py
 
 volumes:
@@ -78,4 +85,4 @@ volumes:
 
 networks: 
   default:
-    name: yuhao_network
+    name: yq_network

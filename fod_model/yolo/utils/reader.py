@@ -38,6 +38,8 @@ def reader(device):
         "-",
     ]
     pipe = sp.Popen(command, stdout=sp.PIPE)
+    no_signal_img = cv2.imread("no_signal.jpg")
+    image_register_A.set(device["id"], no_signal_img)
     while True:
         raw_image = pipe.stdout.read(1280 * 720 * 3)
         image = np.fromstring(raw_image, dtype='uint8')
@@ -45,6 +47,7 @@ def reader(device):
             image = image.reshape((720, 1280, 3))
         except ValueError:
             logging.warning(f"live string from {device['url']} broken!")
+            image_register_A.set(device["id"], no_signal_img)
             sleep(5)
             pipe = sp.Popen(command, stdout=sp.PIPE)
         pipe.stdout.flush()
