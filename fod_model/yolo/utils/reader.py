@@ -25,7 +25,6 @@ image_register_A = Client(
 
 def reader(device):
     # FIXME change url
-    device["url"] = "rtsp://ws_rtsp_server/test"
     command = [
         "ffmpeg",
         "-i",

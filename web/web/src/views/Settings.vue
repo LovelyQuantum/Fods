@@ -28,7 +28,7 @@ export default {
 
   methods: {
     systemReboot() {
-      const path = "http://localhost:5000/system_setting";
+      const path = "http://192.168.20.25:8081/system_setting";
       axios.post(path, "Reboot").then(result => {
         if (result) {
           alert("form submitted!");

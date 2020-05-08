@@ -29,8 +29,6 @@ services:
   web:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:2.0.0
     container_name: web
-    volumes:
-      - ./web/web:/web
     command: npm run serve -- --port 8000
 
   server:
@@ -40,8 +38,6 @@ services:
       - DATABASE_URL=postgresql://quantum:429526000@postgres/yqdb
     depends_on:
       - db
-    volumes:
-      - ./server:/server
     command: gunicorn -k gevent -w 5 -b server:8000 wsgi:app
     # command: flask init
 
@@ -55,7 +51,7 @@ services:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/traefik:2.0.0
     container_name: traefik
     ports: 
-      - "10101:80"
+      - "80:80"
       - "8081:8081"
     depends_on:
       - web
@@ -73,7 +69,6 @@ services:
       - db
       - nginx
     volumes:
-      - ./fod_model/yolo:/yolo
       - ./fod_model/photos:/yolo/photos
     command: python yolo.py
 

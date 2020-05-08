@@ -222,7 +222,7 @@ export default {
       this.recordSeriesQuery();
     },
     systemInfoQuery() {
-      const path = "http://192.168.43.69:8081/apis/system_info";
+      const path = "http://192.168.20.25:8081/apis/system_info";
       axios.get(path).then(res => {
         this.systemUpDay = res.data.systemUpDay + " 天";
         this.warmingTimes = res.data.warmingTimes + "次";
@@ -231,7 +231,7 @@ export default {
     },
 
     recordSeriesQuery() {
-      const path = "http://192.168.43.69:8081/apis/fod_record_report";
+      const path = "http://192.168.20.25:8081/apis/fod_record_report";
       const data = {
         dateRange: {
           dateRangeBegin: this.dateRangeBegin,

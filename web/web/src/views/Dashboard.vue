@@ -106,7 +106,7 @@ export default {
     },
 
     getDevice() {
-      const path = "http://192.168.43.69:8081/apis/get_device_info";
+      const path = "http://192.168.20.25:8081/apis/get_device_info";
       axios
         .get(path)
         .then(res => {
