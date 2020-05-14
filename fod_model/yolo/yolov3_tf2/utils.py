@@ -2,6 +2,8 @@ from absl import logging
 import numpy as np
 import tensorflow as tf
 import cv2
+from PIL import Image, ImageDraw, ImageFont
+
 
 YOLOV3_LAYER_LIST = [
     "yolo_darknet",
@@ -117,13 +119,21 @@ def draw_outputs(img, outputs, class_names):
 
         sql = (x1y1[0] - x2y2[0]) * (x1y1[1] - x2y2[1])
         print(sql)
-        if sql > 11000:
-            flag = "严重预警！"
-        if 8000 < sql < 11000:
+        if sql > 15000:
+            flag = "严重预警"
+        if 12000 < sql < 15000:
             if flag == "":
                 flag = "预警"
 
         img = cv2.rectangle(img, x1y1, x2y2, (16, 22, 58), 2)
+        # pil_img = Image.fromarray(img)
+        # font = ImageFont.truetype("NotoSansCJK-Black.ttc", 5)
+        # fillColor = (16, 22, 58)
+        # position = x1y1
+        # text = f"{class_names[int(classes[i])]}"
+        # draw = ImageDraw.Draw(pil_img)
+        # draw.text(position, text, font=font, fill=fillColor)
+        # img = np.asarray(pil_img)
         img = cv2.putText(
             img,
             f"{class_names[int(classes[i])]}",
@@ -160,5 +170,5 @@ def draw_labels(x, y, class_names):
 def freeze_all(model, frozen=True):
     model.trainable = not frozen
     if isinstance(model, tf.keras.Model):
-        for l in model.layers:
-            freeze_all(l, frozen)
+        for _ in model.layers:
+            freeze_all(_, frozen)

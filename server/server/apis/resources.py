@@ -11,6 +11,8 @@ import os
 import psutil
 
 
+hls_server_url = os.getenv("HLS_SERVER_URL", "localhost")
+
 status_register = Client(
     ("status_register", 12001),
     serializer=serde.python_memcache_serializer,
@@ -36,7 +38,8 @@ class DeviceInfoAPI(MethodView):
             {
                 "id": device.id,
                 "name": f"camera{str(device.id).zfill(2)}",
-                "sourcePath": f"http://192.168.43.69:8082/hls/device{device.id}.m3u8",
+                "sourcePath": f"http://{hls_server_url}"
+                f":8082/hls/device{device.id}.m3u8",
                 "deviceName": device.name,
             }
             for device in Device.query.order_by(Device.id).all()
@@ -49,6 +52,7 @@ class DeviceInfoAPI(MethodView):
 
 class FodRecordAPI(MethodView):
     def post(self):
+        result_perpage = 12
         response = {"status": "record not found"}
         data = request.get_json()
         current_page = data["Page"]
@@ -73,14 +77,14 @@ class FodRecordAPI(MethodView):
                 FodRecord.query.filter(
                     FodRecord.timestamp.between(date_range_begin, date_range_end)
                 ).count()
-                / 7
+                / result_perpage
             )
             if response["totalPages"] > 9999:
                 response["totalPages"] = 9999
             response["records"] = [
                 {
                     "id": record.id,
-                    "timestamp": record.timestamp,
+                    "timestamp": record.timestamp.strftime(r"%Y-%m-%d %H:%M"),
                     "deviceName": Device.query.filter_by(id=record.device_id)
                     .first()
                     .name,
@@ -90,7 +94,9 @@ class FodRecordAPI(MethodView):
                     FodRecord.query.filter(
                         FodRecord.timestamp.between(date_range_begin, date_range_end)
                     ).order_by(FodRecord.timestamp.desc())[
-                        current_page * 7:(current_page + 1) * 7
+                        current_page
+                        * result_perpage:(current_page + 1)
+                        * result_perpage
                     ]
                 )
             ]
@@ -130,7 +136,7 @@ class FodRecordReportAPI(MethodView):
         if FodRecord.query.count():
             response["status"] = "success"
             date_length = (date_range_end - date_range_begin).days
-            time_scale = date_length if date_length < 30 else 30
+            time_scale = date_length if date_length < 15 else 15
             date_periods = np.histogram(
                 np.arange(date_length, dtype=int), bins=time_scale
             )[1].astype("int32")
@@ -140,7 +146,8 @@ class FodRecordReportAPI(MethodView):
                     "data": [
                         {
                             "x": (
-                                date_range_begin + timedelta(days=int(date_periods[i]))
+                                date_range_begin
+                                + timedelta(days=int(date_periods[i]) + 1)
                             ).strftime(r"%Y/%m/%d"),
                             "y": FodRecord.query.filter(
                                 FodRecord.timestamp.between(
@@ -170,8 +177,10 @@ class FodRecordReportAPI(MethodView):
                                 )
                             )
                             .filter(
+                                # FIXME conditions are redundant
                                 or_(
-                                    FodRecord.status == "严重",
+                                    FodRecord.status == "严重预警",
+                                    FodRecord.status == "严重预警！",
                                     FodRecord.status == "severe",
                                 )
                             )
@@ -199,10 +208,7 @@ class DeviceSettingAPI(MethodView):
             device_id=int(request.args.get("device_name")[-2:])
         ).first()
         response["device"] = {
-            "sourcePath": (
-                f"rtsp://{device.username}:{device.password}"
-                f"@{device.ip}:554/Streaming/Channels/1"
-            ),
+            "sourcePath": f"http://{hls_server_url}:8082/hls/device{device.id}.m3u8",
             "name": device.name,
             "ip": device.ip,
             "username": device.username,
@@ -232,6 +238,7 @@ class DeviceSettingAPI(MethodView):
             device.password = data["device"]["password"]
 
         if "fod" in data["func"]:
+
             if not FodCfg.query.filter_by(
                 device_id=int(data["device"]["id"][-2:])
             ).scalar():
@@ -239,6 +246,7 @@ class DeviceSettingAPI(MethodView):
                 if virtual_gpu:
                     virtual_gpu.used = True
                     db.session.add(virtual_gpu)
+                    status_register.set(f"{device.id}_fod", "changed")
                     fodcfg = FodCfg(
                         device_id=data["device"]["id"][-2:],
                         n_warning_threshold=int(data["fodCfg"]["nWarningThreshold"]),
@@ -246,6 +254,7 @@ class DeviceSettingAPI(MethodView):
                         virtual_gpu_id=virtual_gpu.id,
                     )
                 else:
+                    # FIXME not fully support
                     response["status"] = "error"
                     response["error"] = "检测数量达到上限"
                     return jsonify(response)
@@ -263,6 +272,7 @@ class DeviceSettingAPI(MethodView):
             if FodCfg.query.filter_by(
                 device_id=int(data["device"]["id"][-2:])
             ).scalar():
+                status_register.set(f"{device.id}_fod", "changed")
                 fod_cfg = FodCfg.query.filter_by(
                     device_id=int(data["device"]["id"][-2:])
                 ).first()
@@ -286,7 +296,6 @@ class DeviceSettingAPI(MethodView):
                 bddcfg.offset_distance = (int(data["bddCfg"]["offsetDistance"]),)
             db.session.add(bddcfg)
         db.session.commit()
-        status_register.set(f"{device.id}", "changed")
         return jsonify(response)
 
 
@@ -299,6 +308,11 @@ class SystemInfoAPI(MethodView):
         ).days
         response["warmingTimes"] = FodRecord.query.count()
         response["exWarmingTimes"] = FodRecord.query.filter(
-            or_(FodRecord.status == "严重", FodRecord.status == "severe",)
+            # FIXME conditions are redundant
+            or_(
+                FodRecord.status == "严重预警！",
+                FodRecord.status == "severe",
+                FodRecord.status == "严重预警",
+            )
         ).count()
         return jsonify(response)

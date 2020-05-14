@@ -35,5 +35,5 @@ apis.add_url_rule(
 apis.add_url_rule(
     "/system_info",
     view_func=resources.SystemInfoAPI.as_view("system_info"),
-    methods=["GET"],
+    methods=["GET", "POST"],
 )

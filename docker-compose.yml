@@ -29,15 +29,19 @@ services:
   web:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:2.0.0
     container_name: web
+    environment: 
+      - VUE_APP_SERVER_URL=192.168.43.69:8081
     volumes:
       - ./web/web:/web
+      - ./fod_model/photos:/web/public/yolo/photos
     command: npm run serve -- --port 8000
 
   server:
     container_name: server
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/server:2.0.0
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/server:2.1.0
     environment: 
       - DATABASE_URL=postgresql://quantum:429526000@postgres/yqdb
+      - HLS_SERVER_URL=192.168.43.69
     depends_on:
       - db
     volumes:
@@ -45,15 +49,11 @@ services:
     command: gunicorn -k gevent -w 5 -b server:8000 wsgi:app
     # command: flask init
 
-  nginx:
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/nginx:2.0.0
-    container_name: nginx
-    ports:
-      - "8082:8082"
-
   traefik:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/traefik:2.0.0
     container_name: traefik
+    volumes:
+      - ./traefik/config:/etc/traefik
     ports: 
       - "10101:80"
       - "8081:8081"
@@ -61,17 +61,35 @@ services:
       - web
       - server
 
+  nginx:
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/nginx:2.1.0
+    container_name: nginx
+    volumes: 
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8082:8082"
+
+  buffer:
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/buffer:2.1.0
+    container_name: buffer
+    volumes: 
+      - ./buffer:/code
+    depends_on: 
+      - nginx
+    command: python video_buffer.py
+
   fod_model:
     container_name: fod_model
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/fod_model:2.0.0
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/fod_model:2.1.0
     runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=6,7
     depends_on:
       - image_register_A
       - image_register_B
+      - status_register
       - db
-      - nginx
+      - buffer
     volumes:
       - ./fod_model/yolo:/yolo
       - ./fod_model/photos:/yolo/photos

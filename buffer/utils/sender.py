@@ -11,6 +11,7 @@ from pymemcache.client.base import Client
 from pymemcache import serde
 import subprocess as sp
 
+
 image_register_B = Client(
     ("image_register_B", 12003),
     serializer=serde.python_memcache_serializer,

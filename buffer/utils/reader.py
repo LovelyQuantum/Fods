@@ -48,6 +48,7 @@ def reader(device):
             logging.warning(f"live string from {device['url']} broken!")
             sleep(5)
             pipe = sp.Popen(command, stdout=sp.PIPE)
+            continue
         pipe.stdout.flush()
         image = cv2.resize(image, (640, 360))
         image_register_A.set(device["id"], image)

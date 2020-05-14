@@ -8,9 +8,7 @@
 @Contact :   jin1349595233@gmail.com
 """
 from time import sleep
-from utils.reader import reader
-from utils.sender import sender
-from utils.processor import detector, transfer
+from utils.methods import detector, transfer
 from multiprocessing import Process
 from sqlalchemy import create_engine
 from utils.models import FodCfg, Device, DnnModel, VirtualGpu
@@ -29,22 +27,22 @@ status_register = Client(
 )
 
 devices = []
-for index, device in enumerate(session.query(Device).order_by(Device.id)):
+for index, device_info in enumerate(session.query(Device).order_by(Device.id)):
     devices.append(
         {
-            "id": f"{device.id}",
-            "url": f"rtsp://{device.username}:{device.password}"
-            f"@{device.ip}:554/Streaming/Channels/1",
+            "id": f"{device_info.id}",
+            "url": f"rtsp://{device_info.username}:{device_info.password}"
+            f"@{device_info.ip}:554/Streaming/Channels/1",
         }
     )
-    if session.query(FodCfg).filter_by(device_id=device.id).scalar():
+    if session.query(FodCfg).filter_by(device_id=device_info.id).scalar():
         devices[index]["dnn_cfg"] = {
             "weight": session.query(DnnModel).filter_by(id=1).first().weight,
             "classes": session.query(DnnModel).filter_by(id=1).first().classes,
             "gpu_id": session.query(VirtualGpu)
             .filter_by(
                 id=session.query(FodCfg)
-                .filter_by(device_id=device.id)
+                .filter_by(device_id=device_info.id)
                 .first()
                 .virtual_gpu_id
             )
@@ -52,8 +50,6 @@ for index, device in enumerate(session.query(Device).order_by(Device.id)):
             .gpu_id,
         }
 
-read_procs = [Process(target=reader, args=(device,)) for device in devices]
-send_procs = [Process(target=sender, args=(device,)) for device in devices]
 procs = {
     device["id"]: Process(
         target=detector if device.get("dnn_cfg") else transfer, args=(device,),
@@ -61,26 +57,27 @@ procs = {
     for device in devices
 }
 
-for read_proc in read_procs:
-    read_proc.start()
-    sleep(15)
-
 for device in devices:
-    status_register.set(device["id"], "running")
+    while status_register.get(f"{device['id']}_basic") != "running":
+        sleep(1)
     procs[device["id"]].start()
     sleep(15)
 
-for send_proc in send_procs:
-    send_proc.start()
-    sleep(15)
 
 while True:
     sleep(1)
     for device in devices:
-        if status_register.get(device["id"]) == "changed":
+        if status_register.get(f"{device['id']}_fod") == "changed":
             procs[device["id"]].terminate()
-            status_register.set(device["id"], "running")
-            sleep(20)
+            status_register.set(f"{device['id']}_fod", "running")
+            sleep(15)
+
+            device_info = session.query(Device).filter_by(int(device["id"]))
+            new_url = (
+                f"rtsp://{device_info.username}:{device_info.password}"
+                f"@{device_info.ip}:554/Streaming/Channels/1"
+            )
+
             if session.query(FodCfg).filter_by(device_id=int(device["id"])).scalar():
                 device["dnn_cfg"] = {
                     "weight": session.query(DnnModel).filter_by(id=1).first().weight,
@@ -97,7 +94,6 @@ while True:
                 }
             else:
                 device.pop("dnn_cfg", None)
-
             procs[device["id"]] = Process(
                 target=detector if device.get("dnn_cfg") else transfer, args=(device,),
             )
