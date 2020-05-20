@@ -69,11 +69,10 @@ while True:
     for device in devices:
         if status_register.get(f"{device['id']}_fod") == "changed":
             procs[device["id"]].terminate()
-            status_register.set(f"{device['id']}_fod", "running")
-            sleep(15)
+            sleep(5)
 
-            device_info = session.query(Device).filter_by(int(device["id"]))
-            new_url = (
+            device_info = session.query(Device).filter_by(int(device["id"])).first()
+            device["url"] = (
                 f"rtsp://{device_info.username}:{device_info.password}"
                 f"@{device_info.ip}:554/Streaming/Channels/1"
             )
@@ -98,3 +97,4 @@ while True:
                 target=detector if device.get("dnn_cfg") else transfer, args=(device,),
             )
             procs[device["id"]].start()
+            status_register.set(f"{device['id']}_fod", "running")

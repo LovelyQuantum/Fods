@@ -7,4 +7,4 @@ RUN apt-get update \
     && pip config set install.trusted-host mirrors.aliyun.com \
     && apt-get install -y python-psycopg2 libpq-dev libsm6 libxext6 libxrender-dev \
     && pip install -U pip \
-    && pip install -r requirements.txt
+    && pip install -r requirements.txt \

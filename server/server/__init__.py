@@ -67,7 +67,7 @@ def register_commands(app):
         db.create_all()
 
         dnn_model = DnnModel(
-            weight="./checkpoints/yolov3_train_15.tf", category="fod", classes="stone"
+            weight="./checkpoints/yolov3_train_15.tf", category="fod", classes="煤矸石"
         )
         db.session.add(dnn_model)
         # change device num

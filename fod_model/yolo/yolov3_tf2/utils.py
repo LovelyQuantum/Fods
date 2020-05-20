@@ -119,30 +119,31 @@ def draw_outputs(img, outputs, class_names):
 
         sql = (x1y1[0] - x2y2[0]) * (x1y1[1] - x2y2[1])
         print(sql)
-        if sql > 15000:
+        if sql > 20000:
             flag = "严重预警"
-        if 12000 < sql < 15000:
+        if 15000 < sql < 20000:
             if flag == "":
                 flag = "预警"
 
-        img = cv2.rectangle(img, x1y1, x2y2, (16, 22, 58), 2)
-        # pil_img = Image.fromarray(img)
-        # font = ImageFont.truetype("NotoSansCJK-Black.ttc", 5)
-        # fillColor = (16, 22, 58)
-        # position = x1y1
-        # text = f"{class_names[int(classes[i])]}"
-        # draw = ImageDraw.Draw(pil_img)
-        # draw.text(position, text, font=font, fill=fillColor)
-        # img = np.asarray(pil_img)
-        img = cv2.putText(
-            img,
-            f"{class_names[int(classes[i])]}",
-            x1y1,
-            cv2.FONT_HERSHEY_COMPLEX_SMALL,
-            1,
-            (16, 22, 58),
-            2,
-        )
+        img = cv2.rectangle(img, x1y1, x2y2, (172, 45, 92), 2)
+        pil_img = Image.fromarray(img)
+        font = ImageFont.truetype("utils/YaHei.ttf", 20)
+        fillColor = (172, 45, 92)
+        x1, y1 = x1y1
+        position = (x1, y1 - 25)
+        text = f"{class_names[int(classes[i])]}"
+        draw = ImageDraw.Draw(pil_img)
+        draw.text(position, text, font=font, fill=fillColor)
+        img = np.asarray(pil_img)
+        # img = cv2.putText(
+        #     img,
+        #     f"{class_names[int(classes[i])]}",
+        #     x1y1,
+        #     cv2.FONT_HERSHEY_COMPLEX_SMALL,
+        #     1,
+        #     (172, 45, 92),
+        #     2,
+        # )
     return img, flag
 
 
