@@ -118,7 +118,6 @@ def draw_outputs(img, outputs, class_names):
         x2y2 = tuple((np.array(boxes[i][2:4]) * wh).astype(np.int32))
 
         sql = (x1y1[0] - x2y2[0]) * (x1y1[1] - x2y2[1])
-        print(sql)
         if sql > 20000:
             flag = "严重预警"
         if 15000 < sql < 20000:

@@ -6,7 +6,7 @@ from yolov3_tf2.utils import draw_outputs
 from time import time, sleep
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-from utils.models import FodRecord
+from utils.models import FodRecord, DeviceLocation
 from pathlib import Path
 from datetime import datetime
 import cv2
@@ -45,7 +45,7 @@ def detector(device):
     physical_devices = tf.config.list_physical_devices("GPU")
     tf.config.set_logical_device_configuration(
         physical_devices[device["dnn_cfg"]["gpu_id"]],
-        [tf.config.LogicalDeviceConfiguration(memory_limit=3072)],
+        [tf.config.LogicalDeviceConfiguration(memory_limit=2560)],
     )
     logical_devices = tf.config.list_logical_devices("GPU")
 
@@ -60,7 +60,8 @@ def detector(device):
             boxes, scores, classes, nums = yolo.predict(img_in)
             img, flag = draw_outputs(img, (boxes, scores, classes, nums), class_names)
             if flag:
-                if time() - status_register.get(f"{device['id']}_time") > 3:
+                # FIXME add center criterion
+                if time() - status_register.get(f"{device['id']}_time") > 1:
                     status_register.set(f"{device['id']}_time", time())
                     timestamp = datetime.now()
                     dir_path = Path("/yolo/photos").joinpath(
@@ -70,12 +71,17 @@ def detector(device):
                     file_path = dir_path.joinpath(
                         timestamp.strftime(r"%Y%m%d%H%M%S%f") + ".jpg"
                     )
-                    print(file_path)
                     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
                     cv2.imwrite(str(file_path), img)
 
                     fod_record = FodRecord(
-                        device_id=device["id"], status=flag, storage_path=str(file_path)
+                        device_id=device["id"],
+                        status=flag,
+                        storage_path=str(file_path),
+                        location=session.query(DeviceLocation)
+                        .filter_by(device_id=device["id"])
+                        .first()
+                        .location,
                     )
                     session.add(fod_record)
                     session.commit()

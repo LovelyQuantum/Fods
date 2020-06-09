@@ -3,7 +3,7 @@ import click
 from flask import Flask
 from server.settings import config
 from server.extensions import db, migrate
-from server.models import Device, DnnModel, VirtualGpu
+from server.models import Device, DnnModel, VirtualGpu, DeviceLocation
 from server.apis import apis
 
 
@@ -73,6 +73,8 @@ def register_commands(app):
         # change device num
         for _ in range(10):
             device = Device()
+            location = DeviceLocation(device_id=_ + 1, location="无")
+            db.session.add(location)
             db.session.add(device)
         for index in range(2):
             for _ in range(3):

@@ -71,7 +71,9 @@ while True:
             procs[device["id"]].terminate()
             sleep(5)
 
-            device_info = session.query(Device).filter_by(int(device["id"])).first()
+            device_info = (
+                session.query(Device).filter_by(id=int(device["id"])).first()
+            )
             device["url"] = (
                 f"rtsp://{device_info.username}:{device_info.password}"
                 f"@{device_info.ip}:554/Streaming/Channels/1"

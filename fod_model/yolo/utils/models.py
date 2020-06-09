@@ -38,6 +38,7 @@ class FodRecord(Base):
     storage_path = Column(String)
     tags = Column(String, default="")
     areas = Column(String, default="")
+    location = Column(String, default="无")
 
 
 # Belt deviation detection
@@ -67,13 +68,6 @@ class DnnModel(Base):
 
 
 # filled when init system
-class Location(Base):
-    __tablename__ = "location"
-    id = Column(Integer, primary_key=True)
-    location_name = Column(Integer)
-
-
-# filled when init system
 class VirtualGpu(Base):
     __tablename__ = "virtualGpu"
     id = Column(Integer, primary_key=True)
@@ -86,7 +80,7 @@ class DeviceLocation(Base):
     __tablename__ = "deviceLocation"
     id = Column(Integer, primary_key=True)
     device_id = Column(Integer)
-    location_id = Column(Integer)
+    location = Column(String)
 
 
 # system status(running training or erroring...)

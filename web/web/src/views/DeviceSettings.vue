@@ -60,6 +60,19 @@
             }}</span>
           </div>
         </div>
+        <div class="vx-row flex mb-10">
+          <div class="vx-col w-full md:w-1/2">
+            <vs-select v-model="device.location" class="w-full select-large" label="所属矿井">
+              <vs-select-item
+                :key="loca"
+                :value="loca"
+                :text="loca"
+                v-for="loca in locations"
+                class="w-full"
+              />
+            </vs-select>
+          </div>
+        </div>
 
         <!-- function selection -->
         <vs-divider> 功能 </vs-divider>
@@ -209,13 +222,15 @@ export default {
   data() {
     return {
       test_val: 1,
+      locations: ["十四采区", "丈八采区", "无"],
       device: {
         name: "",
         id: "",
         username: "",
         ip: "",
         password: "",
-        path: ""
+        path: "",
+        location: ""
       },
       fodCfg: { nWarningThreshold: 400, exWarningThreshold: 800 },
       bddCfg: { offsetDistance: 30 },
@@ -270,6 +285,7 @@ export default {
           this.device.username = res.data.device.username;
           this.device.ip = res.data.device.ip;
           this.device.password = res.data.device.password;
+          this.device.location = res.data.device.location;
           if (res.data.fodCfg) {
             this.switchs.push("fod");
             this.fodCfg.nWarningThreshold = res.data.fodCfg.nWarningThreshold;

@@ -1,7 +1,7 @@
 from flask import jsonify, request
 from flask.views import MethodView
 from server.extensions import db
-from server.models import Device, FodRecord, FodCfg, BddCfg, VirtualGpu
+from server.models import Device, FodRecord, FodCfg, BddCfg, VirtualGpu, DeviceLocation
 from datetime import datetime, timedelta
 from pymemcache.client.base import Client
 from pymemcache import serde
@@ -88,6 +88,11 @@ class FodRecordAPI(MethodView):
                     "deviceName": Device.query.filter_by(id=record.device_id)
                     .first()
                     .name,
+                    "location": DeviceLocation.query.filter_by(
+                        device_id=record.device_id
+                    )
+                    .first()
+                    .location,
                     "status": record.status,
                 }
                 for Id, record in enumerate(
@@ -131,18 +136,19 @@ class FodRecordReportAPI(MethodView):
             if date_range_begin > date_range_end:
                 date_range_begin, date_range_end = date_range_end, date_range_begin
         else:
-            date_range_begin = datetime.now() - timedelta(days=365)
+            date_range_begin = datetime.now() - timedelta(days=10)
             date_range_end = datetime.now()
+
         if FodRecord.query.count():
             response["status"] = "success"
             date_length = (date_range_end - date_range_begin).days
-            time_scale = date_length if date_length < 15 else 15
+            time_scale = date_length if date_length < 10 else 10
             date_periods = np.histogram(
                 np.arange(date_length, dtype=int), bins=time_scale
             )[1].astype("int32")
             response["recordSeries"] = [
                 {
-                    "name": "预警次数",
+                    "name": "丈八采区预警次数",
                     "data": [
                         {
                             "x": (
@@ -154,39 +160,43 @@ class FodRecordReportAPI(MethodView):
                                     date_range_begin
                                     + timedelta(days=int(date_periods[i])),
                                     date_range_begin
-                                    + timedelta(days=int(date_periods[i + 1])),
+                                    + timedelta(
+                                        days=int(date_periods[i + 1])
+                                        if i < len(date_periods) - 1
+                                        else int(date_periods[i]) + 2
+                                    ),
                                 )
-                            ).count(),
+                            )
+                            .filter(FodRecord.location == "丈八采区")
+                            .count(),
                         }
-                        for i in range(len(date_periods) - 1)
+                        for i in range(len(date_periods))
                     ],
                 },
                 {
-                    "name": "严重预警次数",
+                    "name": "十四采区预警次数",
                     "data": [
                         {
                             "x": (
-                                date_range_begin + timedelta(days=int(date_periods[i]))
+                                date_range_begin
+                                + timedelta(days=int(date_periods[i]) + 1)
                             ).strftime(r"%Y/%m/%d"),
                             "y": FodRecord.query.filter(
                                 FodRecord.timestamp.between(
                                     date_range_begin
                                     + timedelta(days=int(date_periods[i])),
                                     date_range_begin
-                                    + timedelta(days=int(date_periods[i + 1])),
+                                    + timedelta(
+                                        days=int(date_periods[i + 1])
+                                        if i < len(date_periods) - 1
+                                        else int(date_periods[i]) + 2
+                                    ),
                                 )
                             )
-                            .filter(
-                                # FIXME conditions are redundant
-                                or_(
-                                    FodRecord.status == "严重预警",
-                                    FodRecord.status == "严重预警！",
-                                    FodRecord.status == "severe",
-                                )
-                            )
+                            .filter(FodRecord.location == "十四采区")
                             .count(),
                         }
-                        for i in range(len(date_periods) - 1)
+                        for i in range(len(date_periods))
                     ],
                 },
             ]
@@ -195,7 +205,6 @@ class FodRecordReportAPI(MethodView):
 
 
 class DeviceSettingAPI(MethodView):
-    # FIXME get device id from backend not from url
     def get(self):
         response = {"status": "success"}
         device = Device.query.filter_by(
@@ -207,12 +216,16 @@ class DeviceSettingAPI(MethodView):
         bddcfg = BddCfg.query.filter_by(
             device_id=int(request.args.get("device_name")[-2:])
         ).first()
+        location = DeviceLocation.query.filter_by(
+            device_id=int(request.args.get("device_name")[-2:])
+        ).first()
         response["device"] = {
             "sourcePath": f"http://{hls_server_url}:8082/hls/device{device.id}.m3u8",
             "name": device.name,
             "ip": device.ip,
             "username": device.username,
             "password": device.password,
+            "location": location.location,
         }
         if fodcfg:
             response["fodCfg"] = {
@@ -232,13 +245,16 @@ class DeviceSettingAPI(MethodView):
             return jsonify(response)
         else:
             device = Device.query.filter_by(id=int(data["device"]["id"][-2:])).first()
+            location = DeviceLocation.query.filter_by(
+                device_id=int(data["device"]["id"][-2:])
+            ).first()
             device.name = data["device"]["name"]
             device.username = data["device"]["username"]
             device.ip = data["device"]["ip"]
             device.password = data["device"]["password"]
+            location.location = data["device"]["location"]
 
         if "fod" in data["func"]:
-
             if not FodCfg.query.filter_by(
                 device_id=int(data["device"]["id"][-2:])
             ).scalar():
