@@ -241,7 +241,7 @@ export default {
 
   methods: {
     submitForm() {
-      const path = "http://192.168.43.69:8081/apis/device_setting";
+      const path = "http://" + process.env.VUE_APP_SERVER_URL + "/apis/device_setting";
       const deviceSetting = {
         device: this.device,
         fodCfg: this.fodCfg,
@@ -272,7 +272,7 @@ export default {
       this.fodCfg.nWarningThreshold = 400;
       this.fodCfg.exWarningThreshold = 800;
       this.bddCfg.offsetDistance = 30;
-      const path = "http://192.168.43.69:8081/apis/device_setting";
+      const path = "http://" + process.env.VUE_APP_SERVER_URL + "/apis/device_setting";
       axios
         .get(path, {
           params: {

@@ -25,7 +25,24 @@
               color="primary"
               type="filled"
               class="ml-5"
-              @click="recordRangeCheck"
+              @click="recordQuery"
+              >查询</vs-button
+            >
+            <div class="my-auto ml-5 mr-5"><span>按摄像头查询</span></div>
+            <vs-select v-model="dataDevice" class="my-auto">
+              <vs-select-item
+                :key="device.deviceName"
+                :value="device"
+                :text="device.deviceName"
+                v-for="device in devices"
+                class="w-full"
+              />
+            </vs-select>
+            <vs-button
+              color="primary"
+              type="filled"
+              class="ml-5"
+              @click="recordDeviceQuery"
               >查询</vs-button
             >
             <vs-button
@@ -103,13 +120,15 @@ export default {
       activeLine: null,
       dateRangeBegin: null,
       dateRangeEnd: null,
+      dataDevice: null,
       recordQueryMessage: null,
       log: [],
       currentx: 1,
       previewPopupActive: false,
       totalPages: 1,
       previewSrc: null,
-      records: []
+      records: [],
+      devices: []
     };
   },
   methods: {
@@ -121,6 +140,7 @@ export default {
       this.dateRangeBegin = null;
       this.dateRangeEnd = null;
       this.recordQueryMessage = null;
+      this.dataDevice = null;
       this.recordQuery();
     },
 
@@ -142,12 +162,39 @@ export default {
           " 日";
         this.recordQueryMessage =
           "已查询到 " + beginDate + "  至  " + endDate + " 之间的记录";
-        this.recordQuery();
       }
     },
 
+    loadDeviceInfo() {
+      const path =
+        "http://" + process.env.VUE_APP_SERVER_URL + "/apis/system_info";
+      axios.get(path).then(res => {
+        this.devices = res.data.devices;
+      });
+    },
+
+    recordDeviceQuery() {
+      this.recordRangeCheck();
+      const path =
+        "http://" + process.env.VUE_APP_SERVER_URL + "/apis/fod_device_record";
+      const data = {
+        dataDeviceId: this.dataDevice.id,
+        dateRange: {
+          dateRangeBegin: this.dateRangeBegin,
+          dateRangeEnd: this.dateRangeEnd
+        },
+        Page: this.currentx
+      };
+      axios.post(path, data).then(res => {
+        this.records = res.data.records;
+        this.totalPages = res.data.totalPages;
+      });
+    },
+
     recordQuery() {
-      const path = "http://192.168.43.69:8081/apis/fod_record";
+      this.recordRangeCheck();
+      const path =
+        "http://" + process.env.VUE_APP_SERVER_URL + "/apis/fod_record";
       const data = {
         dateRange: {
           dateRangeBegin: this.dateRangeBegin,
@@ -168,7 +215,10 @@ export default {
       } else {
         this.activeLine = tr;
         this.previewPopupActive = true;
-        const path = "http://192.168.43.69:8081/apis/fod_record_preview";
+        const path =
+          "http://" +
+          process.env.VUE_APP_SERVER_URL +
+          "/apis/fod_record_preview";
         const data = { recordId: tr.id };
         axios.post(path, data).then(res => {
           this.previewSrc = res.data.previewSrc;
@@ -177,11 +227,13 @@ export default {
     }
   },
   created() {
+    this.loadDeviceInfo();
     this.recordQuery();
   },
   watch: {
     currentx: function() {
-      this.recordQuery();
+      if (this.devices) this.recordDeviceQuery();
+      else this.recordQuery();
     }
   }
 };

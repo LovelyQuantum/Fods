@@ -83,7 +83,24 @@
               color="primary"
               type="filled"
               class="ml-5"
-              @click="recordRangeCheck"
+              @click="recordRangeQuery"
+              >查询</vs-button
+            >
+            <div class="my-auto ml-5 mr-5"><span>按摄像头查询</span></div>
+            <vs-select v-model="dataDevice" class="my-auto">
+              <vs-select-item
+                :key="device.deviceName"
+                :value="device"
+                :text="device.deviceName"
+                v-for="device in devices"
+                class="w-full"
+              />
+            </vs-select>
+            <vs-button
+              color="primary"
+              type="filled"
+              class="ml-5"
+              @click="recordDeviceRangeQuery"
               >查询</vs-button
             >
             <vs-button
@@ -131,10 +148,12 @@ export default {
       dateFormat: "yyyy-MM-dd",
       dateRangeBegin: null,
       dateRangeEnd: null,
+      dataDevice: null,
       recordQueryMessage: null,
       systemUpDay: "0 天",
       warmingTimes: "0 次",
       exWarmingTimes: "0 次",
+      devices: [],
       recordSeries: {},
       chartOptions: {
         chart: {
@@ -188,7 +207,6 @@ export default {
           axisTicks: {
             show: false
           },
-          // categories: ["01", "05", "09", "13", "17", "21", "26", "31"],
           axisBorder: {
             show: false
           }
@@ -219,19 +237,23 @@ export default {
       this.dateRangeBegin = null;
       this.dateRangeEnd = null;
       this.recordQueryMessage = null;
+      this.dataDevice = null;
       this.recordSeriesQuery();
     },
     systemInfoQuery() {
-      const path = "http://192.168.43.69:8081/apis/system_info";
+      const path =
+        "http://" + process.env.VUE_APP_SERVER_URL + "/apis/system_info";
       axios.get(path).then(res => {
         this.systemUpDay = res.data.systemUpDay + " 天";
         this.warmingTimes = res.data.warmingTimes + "次";
         this.exWarmingTimes = res.data.exWarmingTimes + "次";
+        this.devices = res.data.devices;
       });
     },
 
     recordSeriesQuery() {
-      const path = "http://192.168.43.69:8081/apis/fod_record_report";
+      const path =
+        "http://" + process.env.VUE_APP_SERVER_URL + "/apis/fod_record_report";
       const data = {
         dateRange: {
           dateRangeBegin: this.dateRangeBegin,
@@ -241,6 +263,34 @@ export default {
       axios.post(path, data).then(res => {
         this.recordSeries = res.data.recordSeries;
       });
+    },
+
+    recordDeviceSeriesQuery() {
+      const path =
+        "http://" +
+        process.env.VUE_APP_SERVER_URL +
+        "/apis/fod_device_record_report";
+      const data = {
+        dataDeviceId: this.dataDevice.id,
+        dateRange: {
+          dateRangeBegin: this.dateRangeBegin,
+          dateRangeEnd: this.dateRangeEnd
+        }
+      };
+      axios.post(path, data).then(res => {
+        this.recordSeries = res.data.recordSeries;
+      });
+    },
+    recordRangeQuery() {
+      this.recordRangeCheck();
+      this.recordSeriesQuery();
+    },
+
+    recordDeviceRangeQuery() {
+      if (this.dataDevice) {
+        this.recordRangeCheck();
+        this.recordDeviceSeriesQuery();
+      }
     },
 
     recordRangeCheck() {
@@ -261,7 +311,6 @@ export default {
           " 日";
         this.recordQueryMessage =
           "已查询到 " + beginDate + "  至  " + endDate + " 之间的记录";
-        this.recordSeriesQuery();
       }
     }
   },

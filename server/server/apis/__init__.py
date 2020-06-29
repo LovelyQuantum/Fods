@@ -37,3 +37,13 @@ apis.add_url_rule(
     view_func=resources.SystemInfoAPI.as_view("system_info"),
     methods=["GET", "POST"],
 )
+apis.add_url_rule(
+    "/fod_device_record_report",
+    view_func=resources.FodDeviceRecordReportAPI.as_view("fod_device_record_report"),
+    methods=["GET", "POST"],
+)
+apis.add_url_rule(
+    "/fod_device_record",
+    view_func=resources.FodDeviceRecordAPI.as_view("fod_device_record"),
+    methods=["GET", "POST"],
+)

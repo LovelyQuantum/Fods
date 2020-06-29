@@ -14,6 +14,7 @@ from time import sleep
 import logging
 import cv2
 import numpy as np
+import os
 
 
 image_register_A = Client(
@@ -23,9 +24,12 @@ image_register_A = Client(
 )
 
 
+work_env = os.getenv("WORK_ENV", "production")
+
+
 def reader(device):
-    # FIXME change url
-    device["url"] = "rtsp://ws_rtsp_server/test"
+    if work_env == "development":
+        device["url"] = "rtsp://ws_rtsp_server/test"
     command = [
         "ffmpeg",
         "-i",
@@ -41,7 +45,7 @@ def reader(device):
     pipe = sp.Popen(command, stdout=sp.PIPE)
     while True:
         raw_image = pipe.stdout.read(1280 * 720 * 3)
-        image = np.fromstring(raw_image, dtype='uint8')
+        image = np.fromstring(raw_image, dtype="uint8")
         try:
             image = image.reshape((720, 1280, 3))
         except ValueError:

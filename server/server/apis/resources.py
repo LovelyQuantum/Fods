@@ -5,7 +5,7 @@ from server.models import Device, FodRecord, FodCfg, BddCfg, VirtualGpu, DeviceL
 from datetime import datetime, timedelta
 from pymemcache.client.base import Client
 from pymemcache import serde
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 import numpy as np
 import os
 import psutil
@@ -98,6 +98,74 @@ class FodRecordAPI(MethodView):
                 for Id, record in enumerate(
                     FodRecord.query.filter(
                         FodRecord.timestamp.between(date_range_begin, date_range_end)
+                    ).order_by(FodRecord.timestamp.desc())[
+                        current_page
+                        * result_perpage:(current_page + 1)
+                        * result_perpage
+                    ]
+                )
+            ]
+        return jsonify(response)
+
+
+class FodDeviceRecordAPI(MethodView):
+    def post(self):
+        result_perpage = 12
+        response = {"status": "record not found"}
+        data = request.get_json()
+        current_page = data["Page"]
+
+        if data["dateRange"]["dateRangeBegin"]:
+            date_range_begin = datetime.strptime(
+                data["dateRange"]["dateRangeBegin"][:10], r"%Y-%m-%d"
+            )
+            date_range_end = datetime.strptime(
+                data["dateRange"]["dateRangeEnd"][:10], r"%Y-%m-%d"
+            )
+            if date_range_begin > date_range_end:
+                date_range_begin, date_range_end = date_range_end, date_range_begin
+        else:
+            date_range_begin = datetime.now() - timedelta(days=365)
+            date_range_end = datetime.now()
+
+        # TODO add fix id feature
+        if FodRecord.query.count():
+            response["status"] = "success"
+            response["totalPages"] = int(
+                FodRecord.query.filter(
+                        and_(
+                            FodRecord.timestamp.between(
+                                date_range_begin, date_range_end
+                            ),
+                            FodRecord.device_id == data["dataDeviceId"],
+                        )
+                    ).count()
+                / result_perpage
+            )
+            if response["totalPages"] > 9999:
+                response["totalPages"] = 9999
+            response["records"] = [
+                {
+                    "id": record.id,
+                    "timestamp": record.timestamp.strftime(r"%Y-%m-%d %H:%M"),
+                    "deviceName": Device.query.filter_by(id=record.device_id)
+                    .first()
+                    .name,
+                    "location": DeviceLocation.query.filter_by(
+                        device_id=record.device_id
+                    )
+                    .first()
+                    .location,
+                    "status": record.status,
+                }
+                for Id, record in enumerate(
+                    FodRecord.query.filter(
+                        and_(
+                            FodRecord.timestamp.between(
+                                date_range_begin, date_range_end
+                            ),
+                            FodRecord.device_id == data["dataDeviceId"],
+                        )
                     ).order_by(FodRecord.timestamp.desc())[
                         current_page
                         * result_perpage:(current_page + 1)
@@ -204,6 +272,62 @@ class FodRecordReportAPI(MethodView):
         return jsonify(response)
 
 
+class FodDeviceRecordReportAPI(MethodView):
+    def post(self):
+        response = {"status": "Report not found"}
+        data = request.get_json()
+        if data["dateRange"]["dateRangeBegin"]:
+            date_range_begin = datetime.strptime(
+                data["dateRange"]["dateRangeBegin"][:10], r"%Y-%m-%d"
+            )
+            date_range_end = datetime.strptime(
+                data["dateRange"]["dateRangeEnd"][:10], r"%Y-%m-%d"
+            )
+            if date_range_begin > date_range_end:
+                date_range_begin, date_range_end = date_range_end, date_range_begin
+        else:
+            date_range_begin = datetime.now() - timedelta(days=10)
+            date_range_end = datetime.now()
+
+        if FodRecord.query.count():
+            response["status"] = "success"
+            date_length = (date_range_end - date_range_begin).days
+            time_scale = date_length if date_length < 10 else 10
+            date_periods = np.histogram(
+                np.arange(date_length, dtype=int), bins=time_scale
+            )[1].astype("int32")
+            response["recordSeries"] = [
+                {
+                    "name": "预警次数",
+                    "data": [
+                        {
+                            "x": (
+                                date_range_begin
+                                + timedelta(days=int(date_periods[i]) + 1)
+                            ).strftime(r"%Y/%m/%d"),
+                            "y": FodRecord.query.filter(
+                                FodRecord.timestamp.between(
+                                    date_range_begin
+                                    + timedelta(days=int(date_periods[i])),
+                                    date_range_begin
+                                    + timedelta(
+                                        days=int(date_periods[i + 1])
+                                        if i < len(date_periods) - 1
+                                        else int(date_periods[i]) + 2
+                                    ),
+                                )
+                            )
+                            .filter(FodRecord.device_id == data["dataDeviceId"])
+                            .count(),
+                        }
+                        for i in range(len(date_periods))
+                    ],
+                }
+            ]
+
+        return jsonify(response)
+
+
 class DeviceSettingAPI(MethodView):
     def get(self):
         response = {"status": "success"}
@@ -261,7 +385,6 @@ class DeviceSettingAPI(MethodView):
                 virtual_gpu = VirtualGpu.query.filter_by(used=False).first()
                 if virtual_gpu:
                     virtual_gpu.used = True
-                    db.session.add(virtual_gpu)
                     status_register.set(f"{device.id}_fod", "changed")
                     fodcfg = FodCfg(
                         device_id=data["device"]["id"][-2:],
@@ -269,12 +392,12 @@ class DeviceSettingAPI(MethodView):
                         ex_warning_threshold=int(data["fodCfg"]["exWarningThreshold"]),
                         virtual_gpu_id=virtual_gpu.id,
                     )
+                    db.session.add(fodcfg)
                 else:
                     # FIXME not fully support
                     response["status"] = "error"
                     response["error"] = "检测数量达到上限"
                     return jsonify(response)
-
             else:
                 fodcfg = FodCfg.query.filter_by(
                     device_id=int(data["device"]["id"][-2:])
@@ -283,7 +406,6 @@ class DeviceSettingAPI(MethodView):
                 fodcfg.ex_warning_threshold = (
                     int(data["fodCfg"]["exWarningThreshold"]),
                 )
-            db.session.add(fodcfg)
         else:
             if FodCfg.query.filter_by(
                 device_id=int(data["device"]["id"][-2:])
@@ -292,9 +414,10 @@ class DeviceSettingAPI(MethodView):
                 fod_cfg = FodCfg.query.filter_by(
                     device_id=int(data["device"]["id"][-2:])
                 ).first()
-                v_gpu = VirtualGpu.query.filter_by(id=fod_cfg.virtual_gpu_id).first()
-                v_gpu.used = False
-                db.session.add(v_gpu)
+                virtual_gpu = VirtualGpu.query.filter_by(
+                    id=fod_cfg.virtual_gpu_id
+                ).first()
+                virtual_gpu.used = False
                 db.session.delete(fod_cfg)
 
         if "bdd" in data["func"]:
@@ -305,12 +428,20 @@ class DeviceSettingAPI(MethodView):
                     device_id=data["device"]["id"][-2:],
                     offset_distance=int(data["bddCfg"]["offsetDistance"]),
                 )
+                db.session.add(bddcfg)
             else:
                 bddcfg = BddCfg.query.filter_by(
                     device_id=int(data["device"]["id"][-2:])
                 ).first()
                 bddcfg.offset_distance = (int(data["bddCfg"]["offsetDistance"]),)
-            db.session.add(bddcfg)
+        else:
+            if BddCfg.query.filter_by(
+                device_id=int(data["device"]["id"][-2:])
+            ).scalar():
+                bdd_cfg = BddCfg.query.filter_by(
+                    device_id=int(data["device"]["id"][-2:])
+                ).first()
+                db.session.delete(bdd_cfg)
         db.session.commit()
         return jsonify(response)
 
@@ -331,4 +462,8 @@ class SystemInfoAPI(MethodView):
                 FodRecord.status == "严重预警",
             )
         ).count()
+        response["devices"] = [
+            {"id": device.id, "deviceName": device.name}
+            for device in Device.query.order_by(Device.id).all()
+        ]
         return jsonify(response)

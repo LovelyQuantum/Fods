@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from utils.models import FodRecord, DeviceLocation
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import cv2
 
 
@@ -45,7 +45,7 @@ def detector(device):
     physical_devices = tf.config.list_physical_devices("GPU")
     tf.config.set_logical_device_configuration(
         physical_devices[device["dnn_cfg"]["gpu_id"]],
-        [tf.config.LogicalDeviceConfiguration(memory_limit=2560)],
+        [tf.config.LogicalDeviceConfiguration(memory_limit=1024)],
     )
     logical_devices = tf.config.list_logical_devices("GPU")
 
@@ -63,7 +63,9 @@ def detector(device):
                 # FIXME add center criterion
                 if time() - status_register.get(f"{device['id']}_time") > 1:
                     status_register.set(f"{device['id']}_time", time())
-                    timestamp = datetime.now()
+                    timestamp = datetime.utcnow().astimezone(
+                        timezone(timedelta(hours=8))
+                    )
                     dir_path = Path("/yolo/photos").joinpath(
                         timestamp.strftime("%Y"), timestamp.strftime("%B")
                     )
