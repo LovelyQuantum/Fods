@@ -1,7 +1,0 @@
-nvidia-ml-py3
-opencv-python
-pymemcache
-sqlalchemy
-psycopg2
-python-dotenv
-Pillow

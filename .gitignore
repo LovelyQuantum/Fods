@@ -26,11 +26,8 @@ yarn-error.log
 vuexy-shell-scripts
 
 # fod_model
-**/yolo/data/source/
-**/yolo/checkpoints/*
+**/yolov5/weights/*
 !.gitkeep
-*.tfrecord
-*.weights
 *.mp4
 
 # python
