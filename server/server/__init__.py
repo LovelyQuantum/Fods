@@ -77,7 +77,7 @@ def register_commands(app):
             db.session.add(location)
             db.session.add(device)
         for index in range(2):
-            for _ in range(3):
+            for _ in range(2):
                 v_gpu = VirtualGpu(used=False, gpu_id=index)
                 db.session.add(v_gpu)
         db.session.commit()

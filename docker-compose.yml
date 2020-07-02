@@ -17,6 +17,16 @@ services:
     image: memcached
     command: memcached -m 64 -p 12003 -I 4m
 
+  fod_image_register_A:
+    container_name: fod_image_register_A
+    image: memcached
+    command: memcached -m 64 -p 12004 -I 4m
+
+  fod_image_register_B:
+    container_name: fod_image_register_B
+    image: memcached
+    command: memcached -m 64 -p 12005 -I 4m
+
   db:
     image: postgres
     container_name: postgres
@@ -27,15 +37,15 @@ services:
       - POSTGRES_DB=yqdb
       - POSTGRES_PASSWORD=429526000
 
-  web:
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:2.2.0
-    container_name: web
-    environment: 
-      - VUE_APP_SERVER_URL=192.168.43.69:8081
-    volumes:
-      - ./web/web:/web
-      - ./fod_model/photos:/web/public/yolo/photos
-    command: npm run serve -- --port 8000
+  # web:
+  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:2.2.0
+  #   container_name: web
+  #   environment: 
+  #     - VUE_APP_SERVER_URL=192.168.43.69:8081
+  #   volumes:
+  #     - ./web/web:/web
+  #     - ./fod_model/photos:/web/public/yolo/photos
+  #   command: npm run serve -- --port 8000
 
   server:
     container_name: server
@@ -50,17 +60,17 @@ services:
     command: gunicorn -k gevent -w 5 -b server:8000 wsgi:app
     # command: flask init
 
-  traefik:
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/traefik:2.2.0
-    container_name: traefik
-    volumes:
-      - ./traefik/config:/etc/traefik
-    ports: 
-      - "10101:80"
-      - "8081:8081"
-    depends_on:
-      - web
-      - server
+  # traefik:
+  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/traefik:2.2.0
+  #   container_name: traefik
+  #   volumes:
+  #     - ./traefik/config:/etc/traefik
+  #   ports: 
+  #     - "10101:80"
+  #     - "8081:8081"
+  #   depends_on:
+  #     - web
+  #     - server
 
   nginx:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/nginx:2.2.0
@@ -70,33 +80,30 @@ services:
     ports:
       - "8082:8082"
 
-  buffer:
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/buffer:2.2.0
-    container_name: buffer
-    environment: 
-      - WORK_ENV=development
-    volumes:
-      - ./buffer:/code
-    depends_on: 
-      - nginx
-    command: python video_buffer.py
+  # buffer:
+  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/buffer:2.2.0
+  #   container_name: buffer
+  #   environment: 
+  #     - WORK_ENV=development
+  #   volumes:
+  #     - ./buffer:/code
+  #   depends_on: 
+  #     - nginx
+  #   command: python video_buffer.py
 
   fod_model:
     container_name: fod_model
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/fod_model:2.2.0
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/fod_model:latest
     runtime: nvidia
     environment:
-      - NVIDIA_VISIBLE_DEVICES=6,7
+      - NVIDIA_VISIBLE_DEVICES=6
     depends_on:
-      - image_register_A
-      - image_register_B
-      - status_register
-      - db
-      - buffer
+      - fod_image_register_A
+      - fod_image_register_B
     volumes:
-      - ./fod_model/yolo:/yolo
-      - ./fod_model/photos:/yolo/photos
-    command: python yolo.py
+      - ./fod_model/yolov5:/yolov5
+      # - ./fod_model/photos:/yolo/photos
+    command: python detect.py
 
 volumes:
   yq_data:

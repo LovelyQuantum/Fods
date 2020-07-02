@@ -23,7 +23,6 @@ image_register_A = Client(
     deserializer=serde.python_memcache_deserializer,
 )
 
-
 work_env = os.getenv("WORK_ENV", "production")
 
 
