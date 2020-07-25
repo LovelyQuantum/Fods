@@ -21,14 +21,14 @@ status_register = Client(
     deserializer=serde.python_memcache_deserializer,
 )
 
-# image_register_A = Client(
-#     ("image_register_A", 12002),
-#     serializer=serde.python_memcache_serializer,
-#     deserializer=serde.python_memcache_deserializer,
-# )
-
 image_register_B = Client(
     ("image_register_B", 12003),
+    serializer=serde.python_memcache_serializer,
+    deserializer=serde.python_memcache_deserializer,
+)
+
+fod_image_register_B = Client(
+    ("fod_image_register_B", 12005),
     serializer=serde.python_memcache_serializer,
     deserializer=serde.python_memcache_deserializer,
 )
@@ -52,10 +52,13 @@ for index, device_info in enumerate(session.query(Device).order_by(Device.id)):
             .virtual_gpu_id,
         }
 
-loading_img = cv2.imread("img/loading.jpg")
+loading_img = cv2.imread("img/loading.png")
 loading_img = cv2.resize(loading_img, (640, 360))
 for device in devices:
     image_register_B.set(device["id"], loading_img)
+
+for i in range(1, 5):
+    fod_image_register_B.set(f"fod_pipeline_{i}", loading_img)
 
 
 read_procs = {
@@ -76,6 +79,8 @@ send_procs = {
 for device in devices:
     status_register.set(f"{device['id']}_basic", "running")
     read_procs[device["id"]].start()
+    sleep(5)
+    transfer_procs[device["id"]].start()
     sleep(5)
     send_procs[device["id"]].start()
     sleep(5)

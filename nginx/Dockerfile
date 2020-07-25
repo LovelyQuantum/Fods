@@ -1,12 +1,12 @@
 ARG NGINX_VERSION=1.16.1
-ARG NGINX_HTTP_FLV_MODULE_VERSION=1.2.7
+ARG NGINX_RTMP_VERSION=1.2.1
 
 
 ##############################
 # Build the NGINX-build image.
 FROM alpine:3.11 as build-nginx
 ARG NGINX_VERSION
-ARG NGINX_HTTP_FLV_MODULE_VERSION
+ARG NGINX_RTMP_VERSION
 
 # Build dependencies.
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
@@ -36,14 +36,14 @@ RUN cd /tmp && \
 
 # Get nginx-rtmp module.
 RUN cd /tmp && \
-  wget https://github.com/winshining/nginx-http-flv-module/archive/v${NGINX_HTTP_FLV_MODULE_VERSION}.tar.gz && \
-  tar zxf v${NGINX_HTTP_FLV_MODULE_VERSION}.tar.gz && rm v${NGINX_HTTP_FLV_MODULE_VERSION}.tar.gz
+  wget https://github.com/arut/nginx-rtmp-module/archive/v${NGINX_RTMP_VERSION}.tar.gz && \
+  tar zxf v${NGINX_RTMP_VERSION}.tar.gz && rm v${NGINX_RTMP_VERSION}.tar.gz
 
 # Compile nginx with nginx-rtmp module.
 RUN cd /tmp/nginx-${NGINX_VERSION} && \
   ./configure \
   --prefix=/usr/local/nginx \
-  --add-module=/tmp/nginx-http-flv-module-${NGINX_HTTP_FLV_MODULE_VERSION} \
+  --add-module=/tmp/nginx-rtmp-module-${NGINX_RTMP_VERSION} \
   --conf-path=/etc/nginx/nginx.conf \
   --with-threads \
   --with-file-aio \
@@ -51,6 +51,7 @@ RUN cd /tmp/nginx-${NGINX_VERSION} && \
   --with-debug \
   --with-cc-opt="-Wimplicit-fallthrough=0" && \
   cd /tmp/nginx-${NGINX_VERSION} && make && make install
+
 
 ##########################
 # Build the release image.
@@ -86,8 +87,6 @@ COPY --from=build-nginx /etc/nginx /etc/nginx
 # Add NGINX path, config and static files.
 ENV PATH "${PATH}:/usr/local/nginx/sbin"
 ADD nginx.conf /etc/nginx/nginx.conf.template
-RUN mkdir -p /opt/data && mkdir /www
-ADD static /www/static
 
 EXPOSE 1935
 EXPOSE 80

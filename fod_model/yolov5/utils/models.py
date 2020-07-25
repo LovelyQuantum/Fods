@@ -1,7 +1,14 @@
+"""
+@Author: your name
+@Date: 2020-07-20 23:13:28
+@LastEditTime: 2020-07-22 01:08:14
+@LastEditors: Please set LastEditors
+@Description: In User Settings Edit
+@FilePath: /yqfods/fod_model/yolov5/utils/models.py
+"""
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from datetime import datetime
-
 
 Base = declarative_base()
 

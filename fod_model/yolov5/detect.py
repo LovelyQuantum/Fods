@@ -1,8 +1,23 @@
+"""
+@Author: Yuhao Jin
+@Date: 2020-07-20 20:03:18
+@LastEditTime: 2020-07-20 22:28:31
+@Description: 
+"""
 import argparse
 import torch.backends.cudnn as cudnn
 from utils import google_utils
 from utils.datasets import *
 from utils.utils import *
+from pymemcache.client.base import Client
+from pymemcache import serde
+import os
+
+status_register = Client(
+    ("status_register", 12001),
+    serializer=serde.python_memcache_serializer,
+    deserializer=serde.python_memcache_deserializer,
+)
 
 
 def detect(save_img=False):
@@ -62,9 +77,20 @@ def detect(save_img=False):
                     s += "%g %ss, " % (n, names[int(c)])  # add to string
 
                 # Write results
+                max_area = 0
+                core_y = 0
                 for *xyxy, conf, cls in det:
-                # Add bbox to image
+                    # Add bbox to image
                     label = "%s %.2f" % (names[int(cls)], conf)
+                    x1, y1, x2, y2 = (
+                        int(xyxy[0]),
+                        int(xyxy[1]),
+                        int(xyxy[2]),
+                        int(xyxy[3]),
+                    )
+                    if abs((y2 - y1) * (x2 - x1)) > max_area:
+                        core_y = (y1 + y2) / 2
+                        max_area = abs((y2 - y1) * (x2 - x1))
                     plot_one_box(
                         xyxy,
                         im0,
@@ -72,6 +98,21 @@ def detect(save_img=False):
                         color=colors[int(cls)],
                         line_thickness=3,
                     )
+                old_area = status_register.set(
+                    f"fod_pipeline_{pipeline}_max_area", max_area
+                )
+                old_core_y = status_register.set(
+                    f"fod_pipeline_{pipeline}_core_y", core_y
+                )
+                if 0.9 < old_area / max_area < 1.1 or 0.9 < old_core_y / core_y < 1.1:
+                    pass
+                elif max_area > 18000:
+                    save_img(pipeline, im0, status="严重预警")
+                    trigger_alarm(pipeline)
+                elif 15000 < max_area < 18000:
+                    save_img(pipeline, im0, status="预警")
+                status_register.set(f"fod_pipeline_{pipeline}_max_area", max_area)
+                status_register.set(f"fod_pipeline_{pipeline}_core_y", core_y)
             send_img(pipeline, im0)
 
 

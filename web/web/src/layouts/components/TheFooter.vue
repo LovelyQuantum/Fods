@@ -1,3 +1,9 @@
+<!--
+ * @Author: Yuhao Jin
+ * @Date: 2020-07-25 10:31:50
+ * @LastEditTime: 2020-07-25 10:31:51
+ * @Description: 
+--> 
 <!-- =========================================================================================
     File Name: TheFooter.vue
     Description: Footer component

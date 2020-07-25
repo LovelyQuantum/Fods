@@ -1,3 +1,11 @@
+'''
+@Author: your name
+@Date: 2020-07-20 23:11:10
+@LastEditTime: 2020-07-20 23:11:10
+@LastEditors: your name
+@Description: In User Settings Edit
+@FilePath: /yqfods/buffer/utils/transfer.py
+'''
 from pymemcache.client.base import Client
 from pymemcache import serde
 from time import time, sleep
@@ -39,11 +47,11 @@ def fod_transfer(device):
     while True:
         start_time = time()
         fod_image_register_A.set(
-            f"fod_pipeline_{device['virtual_gpu_id']}",
+            f"fod_pipeline_{device['dnn_cfg']['virtual_gpu_id']}",
             image_register_A.get(device["id"]),
         )
         image_register_B.set(
             device["id"],
-            fod_image_register_B.get(f"fod_pipeline_{device['virtual_gpu_id']}"),
+            fod_image_register_B.get(f"fod_pipeline_{device['dnn_cfg']['virtual_gpu_id']}"),
         )
         sleep(0.04 - ((time() - start_time) % 0.04))

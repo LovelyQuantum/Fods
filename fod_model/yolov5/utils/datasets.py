@@ -15,11 +15,27 @@ from tqdm import tqdm
 from utils.utils import xyxy2xywh, xywh2xyxy
 from pymemcache.client.base import Client
 from pymemcache import serde
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from models import FodCfg
+from time import time, sleep
+from datetime import datetime, timezone, timedelta
+from models import FodRecord, DeviceLocation
+
 
 help_url = "https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data"
 img_formats = [".bmp", ".jpg", ".jpeg", ".png", ".tif", ".dng"]
 vid_formats = [".mov", ".avi", ".mp4", ".mpg", ".mpeg", ".m4v", ".wmv", ".mkv"]
 
+engine = create_engine("postgresql://quantum:429526000@postgres/yqdb")
+Session = sessionmaker(bind=engine)
+session = Session()
+
+status_register = Client(
+    ("status_register", 12001),
+    serializer=serde.python_memcache_serializer,
+    deserializer=serde.python_memcache_deserializer,
+)
 
 fod_image_register_A = Client(
     ("fod_image_register_A", 12004),
@@ -39,8 +55,49 @@ for orientation in ExifTags.TAGS.keys():
         break
 
 
+def trigger_alarm(pipeline):
+    device_id = (
+        session.query(FodCfg).filter_by(virtual_gpu_id=pipeline).first().device_id
+    )
+    location = (
+        session.query(DeviceLocation).filter_by(device_id=device_id).first().location
+    )
+    if location == "":
+        pass
+    elif location == "":
+        pass
+
+
 def send_img(pipeline, img):
     fod_image_register_B.set(f"fod_pipeline_{pipeline}", img)
+
+
+def save_img(pipeline, img, status):
+    device_id = (
+        session.query(FodCfg).filter_by(virtual_gpu_id=pipeline).first().device_id
+    )
+    if time() - status_register.get(f"fod_pipeline_{pipeline}_time") > 1:
+        status_register.set(f"fod_pipeline_{pipeline}_time", time())
+        timestamp = datetime.utcnow().astimezone(timezone(timedelta(hours=8)))
+        dir_path = Path("/yolov5/photos").joinpath(
+            timestamp.strftime("%Y"), timestamp.strftime("%B")
+        )
+        dir_path.mkdir(parents=True, exist_ok=True)
+        file_path = dir_path.joinpath(timestamp.strftime(r"%Y%m%d%H%M%S%f") + ".jpg")
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        cv2.imwrite(str(file_path), img)
+
+        fod_record = FodRecord(
+            device_id=device_id,
+            status=status,
+            storage_path=str(file_path),
+            location=session.query(DeviceLocation)
+            .filter_by(device_id=device_id)
+            .first()
+            .location,
+        )
+        session.add(fod_record)
+        session.commit()
 
 
 def exif_size(img):
@@ -100,8 +157,11 @@ def create_dataloader(
 class LoadImages:  # for inference
     def __init__(self, img_size=640):
         self.img_size = img_size
-        temp_img = cv2.imread("demo/loading.jpg")
+        temp_img = cv2.imread("demo/loading.png")
         for i in range(1, 5):
+            status_register.set(f"fod_pipeline_{i}_time", time())
+            status_register.set(f"fod_pipeline_{i}_max_area", 1)
+            status_register.set(f"fod_pipeline_{i}_core_y", 1)
             fod_image_register_A.set(f"fod_pipeline_{i}", temp_img)
 
     def __iter__(self):
