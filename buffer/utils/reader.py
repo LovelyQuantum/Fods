@@ -1,12 +1,12 @@
+"""
+@Author: Yuhao Jin
+@Date: 2020-07-30 20:15:39
+@LastEditTime: 2020-07-30 20:15:58
+@Description: 
+"""
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-"""
-@File    :   reader.py
-@Time    :   2020/03/14
-@Author  :   Yuhao Jin
-@Contact :   jin1349595233@gmail.com
-"""
 from pymemcache.client.base import Client
 import subprocess as sp
 from pymemcache import serde
@@ -17,6 +17,7 @@ import numpy as np
 import os
 
 
+logging.basicConfig(level=logging.ERROR)
 image_register_A = Client(
     ("image_register_A", 12002),
     serializer=serde.python_memcache_serializer,
@@ -31,6 +32,9 @@ def reader(device):
         device["url"] = "rtsp://ws_rtsp_server/test"
     command = [
         "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "quiet",
         "-i",
         device["url"],
         "-f",

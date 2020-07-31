@@ -17,10 +17,10 @@ from pymemcache.client.base import Client
 from pymemcache import serde
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-from models import FodCfg
+from utils.models import FodCfg, FodRecord, DeviceLocation
 from time import time, sleep
 from datetime import datetime, timezone, timedelta
-from models import FodRecord, DeviceLocation
+from multiprocessing import Process
 
 
 help_url = "https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data"
@@ -55,6 +55,17 @@ for orientation in ExifTags.TAGS.keys():
         break
 
 
+def call_alarm(location):
+    os.chdir("/yolov5/Alarm_lib/linux64/lib")
+    if status_register.get(f"{location}_alarm_status") == "empty":
+        status_register.set(f"{location}_alarm_status", "runing")
+        if location == "丈八采区":
+            os.system("./8th_mining_area")
+        elif location == "十四采区":
+            os.system("./14th_mining_area")
+        status_register.set(f"{location}_alarm_status", "empty")
+
+
 def trigger_alarm(pipeline):
     device_id = (
         session.query(FodCfg).filter_by(virtual_gpu_id=pipeline).first().device_id
@@ -62,10 +73,8 @@ def trigger_alarm(pipeline):
     location = (
         session.query(DeviceLocation).filter_by(device_id=device_id).first().location
     )
-    if location == "":
-        pass
-    elif location == "":
-        pass
+    alarm_process = Process(target=call_alarm, args=(location,),)
+    alarm_process.start()
 
 
 def send_img(pipeline, img):

@@ -1,3 +1,9 @@
+'''
+@Author: Yuhao Jin
+@Date: 2020-07-30 20:16:22
+@LastEditTime: 2020-07-30 20:33:37
+@Description: 
+'''
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
@@ -22,6 +28,9 @@ image_register_B = Client(
 def sender(device):
     command = [
         "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "quiet",
         "-re",
         "-r",
         "10",

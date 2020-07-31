@@ -4,7 +4,7 @@
 .vscode/
 test_use
 sandbox
-backup
+**/backup
 photos
 
 # web component
