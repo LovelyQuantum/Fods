@@ -2,7 +2,7 @@ from flask import jsonify, request
 from flask.views import MethodView
 from server.extensions import db
 from server.models import Device, FodRecord, FodCfg, BddCfg, VirtualGpu, DeviceLocation
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pymemcache.client.base import Client
 from pymemcache import serde
 from sqlalchemy import or_, and_
@@ -84,7 +84,7 @@ class FodRecordAPI(MethodView):
             response["records"] = [
                 {
                     "id": record.id,
-                    "timestamp": record.timestamp.strftime(r"%Y-%m-%d %H:%M"),
+                    "timestamp": record.timestamp.astimezone(timezone(timedelta(hours=8))).strftime(r"%Y-%m-%d %H:%M"),
                     "deviceName": Device.query.filter_by(id=record.device_id)
                     .first()
                     .name,
@@ -100,7 +100,7 @@ class FodRecordAPI(MethodView):
                         FodRecord.timestamp.between(date_range_begin, date_range_end)
                     ).order_by(FodRecord.timestamp.desc())[
                         current_page
-                        * result_perpage:(current_page + 1)
+                        * result_perpage : (current_page + 1)
                         * result_perpage
                     ]
                 )
@@ -133,13 +133,11 @@ class FodDeviceRecordAPI(MethodView):
             response["status"] = "success"
             response["totalPages"] = int(
                 FodRecord.query.filter(
-                        and_(
-                            FodRecord.timestamp.between(
-                                date_range_begin, date_range_end
-                            ),
-                            FodRecord.device_id == data["dataDeviceId"],
-                        )
-                    ).count()
+                    and_(
+                        FodRecord.timestamp.between(date_range_begin, date_range_end),
+                        FodRecord.device_id == data["dataDeviceId"],
+                    )
+                ).count()
                 / result_perpage
             )
             if response["totalPages"] > 9999:
@@ -168,7 +166,7 @@ class FodDeviceRecordAPI(MethodView):
                         )
                     ).order_by(FodRecord.timestamp.desc())[
                         current_page
-                        * result_perpage:(current_page + 1)
+                        * result_perpage : (current_page + 1)
                         * result_perpage
                     ]
                 )
@@ -358,7 +356,6 @@ class DeviceSettingAPI(MethodView):
             }
         if bddcfg:
             response["bddCfg"] = {"offsetDistance": bddcfg.offset_distance}
-
         return jsonify(response)
 
     def post(self):
@@ -379,6 +376,10 @@ class DeviceSettingAPI(MethodView):
             location.location = data["device"]["location"]
 
         if "fod" in data["func"]:
+            nThreshold = int(data["fodCfg"]["nWarningThreshold"])
+            exThreshold = int(data["fodCfg"]["exWarningThreshold"])
+            if nThreshold > exThreshold - 100:
+                nThreshold = exThreshold - 100
             if not FodCfg.query.filter_by(
                 device_id=int(data["device"]["id"][-2:])
             ).scalar():
@@ -388,8 +389,8 @@ class DeviceSettingAPI(MethodView):
                     status_register.set(f"{device.id}_fod", "changed")
                     fodcfg = FodCfg(
                         device_id=data["device"]["id"][-2:],
-                        n_warning_threshold=int(data["fodCfg"]["nWarningThreshold"]),
-                        ex_warning_threshold=int(data["fodCfg"]["exWarningThreshold"]),
+                        n_warning_threshold=nThreshold,
+                        ex_warning_threshold=exThreshold,
                         virtual_gpu_id=virtual_gpu.id,
                     )
                     db.session.add(fodcfg)
@@ -402,10 +403,15 @@ class DeviceSettingAPI(MethodView):
                 fodcfg = FodCfg.query.filter_by(
                     device_id=int(data["device"]["id"][-2:])
                 ).first()
-                fodcfg.n_warning_threshold = (int(data["fodCfg"]["nWarningThreshold"]),)
-                fodcfg.ex_warning_threshold = (
-                    int(data["fodCfg"]["exWarningThreshold"]),
-                )
+                fodcfg.n_warning_threshold = nThreshold
+                fodcfg.ex_warning_threshold = exThreshold
+            status_register.set(
+                f"fod_pipeline_{fodcfg.virtual_gpu_id}_nThreshold", nThreshold
+            )
+            status_register.set(
+                f"fod_pipeline_{fodcfg.virtual_gpu_id}_exThreshold", exThreshold
+            )
+
         else:
             if FodCfg.query.filter_by(
                 device_id=int(data["device"]["id"][-2:])

@@ -29,6 +29,7 @@ vuexy-shell-scripts
 **/yolov5/weights/*
 !.gitkeep
 *.mp4
+**/*.pt
 
 # python
 # Byte-compiled / optimized / DLL files

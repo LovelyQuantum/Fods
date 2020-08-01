@@ -47,7 +47,7 @@ class FodCfg(db.Model):
 class FodRecord(db.Model):
     __tablename__ = "fodRecord"
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.now, index=True)
+    timestamp = db.Column(db.DateTime, index=True)
     device_id = db.Column(db.Integer)
     dnn_model_id = db.Column(db.Integer, default=1)
     status = db.Column(db.String)

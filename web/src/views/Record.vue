@@ -31,7 +31,7 @@
             <div class="my-auto ml-5 mr-5"><span>按摄像头查询</span></div>
             <vs-select v-model="dataDevice" class="my-auto">
               <vs-select-item
-                :key="device.deviceName"
+                :key="device.id"
                 :value="device"
                 :text="device.deviceName"
                 v-for="device in devices"
@@ -232,7 +232,7 @@ export default {
   },
   watch: {
     currentx: function() {
-      if (this.devices) this.recordDeviceQuery();
+      if (this.dataDevice) this.recordDeviceQuery();
       else this.recordQuery();
     }
   }

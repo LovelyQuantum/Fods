@@ -1,5 +1,5 @@
 FROM pytorch/pytorch
-COPY ./yolov5 /yolov5
+COPY . /yolov5
 COPY ./sources.list /etc/apt/sources.list
 RUN apt-get update \
     && apt-get install -y python-psycopg2 libpq-dev libsm6 libxext6 libxrender-dev gcc libglib2.0-0 \

@@ -1,0 +1,13 @@
+Cython
+numpy
+opencv-python
+matplotlib
+pillow
+tensorboard
+PyYAML>=5.3
+scipy
+tqdm
+pymemcache
+sqlalchemy
+psycopg2
+python-dotenv

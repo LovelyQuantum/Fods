@@ -118,8 +118,8 @@
                   <div class="vx-col w-full md:w-4/5">
                     <vs-slider
                       v-model="fodCfg.nWarningThreshold"
-                      :min="200"
-                      :max="1000"
+                      :min="7500"
+                      :max="15000"
                     />
                   </div>
                 </div>
@@ -135,8 +135,8 @@
                   <div class="vx-col  w-full md:w-4/5">
                     <vs-slider
                       v-model="fodCfg.exWarningThreshold"
-                      :min="200"
-                      :max="1000"
+                      :min="10000"
+                      :max="20000"
                     />
                   </div>
                 </div>

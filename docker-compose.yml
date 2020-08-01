@@ -47,7 +47,7 @@ services:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:latest
     container_name: web
     # restart: always
-    environment: 
+    environment:
       - VUE_APP_SERVER_URL=192.168.43.69:8081
     # volumes:
     #   - ./web/web:/web
@@ -57,6 +57,7 @@ services:
       - "traefik.http.routers.web.rule=Host(`192.168.43.69`)"
       - "traefik.http.routers.web.entrypoints=web"
       - "traefik.http.services.web.loadBalancer.server.port=80"
+    # command: npm run serve -- -- port 80
 
   server:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/server:2.2.0
@@ -73,8 +74,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.server.rule=Host(`192.168.43.69`)"
       - "traefik.http.routers.server.entrypoints=server"
-      - "traefik.http.services.server.loadBalancer.server.port=8000"
-    command: gunicorn -k gevent -w 5 -b server:8000 wsgi:app
+      - "traefik.http.services.server.loadBalancer.server.port=80"
+    command: gunicorn -k gevent -w 5 -b server:80 wsgi:app
     # command: flask init
 
   traefik:
@@ -125,7 +126,7 @@ services:
       - fod_image_register_A
       - fod_image_register_B
     volumes:
-      - ./fod_model/yolov5:/yolov5
+      - ./fod_model:/yolov5
       # - ./fod_model/photos:/yolov5/photos
     command: python detect.py
 
