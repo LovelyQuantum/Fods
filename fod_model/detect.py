@@ -59,7 +59,6 @@ def detect():
         status_register.get(f"fod_pipeline_{i}_exThreshold") for i in range(1, 5)
     ]
     for pipeline, img, im0 in dataset:
-        ori_img = im0.copy()
         counter += 1
         if counter > 40:
             counter = 0
@@ -119,13 +118,11 @@ def detect():
                 elif max_area > nThresholds[pipeline - 1]:
                     save_img(pipeline, im0, status="严重预警")
                     trigger_alarm(pipeline)
-                    ori_img = im0
                 elif nThresholds[pipeline - 1] < max_area < exThresholds[pipeline - 1]:
                     save_img(pipeline, im0, status="预警")
-                    ori_img = im0
                 old_area = max_area
                 old_core_y = core_y
-        send_img(pipeline, ori_img)
+        send_img(pipeline, im0)
 
 
 if __name__ == "__main__":

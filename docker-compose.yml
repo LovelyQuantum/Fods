@@ -1,5 +1,4 @@
 version: "2.4"
-# need to change traefit ip and buffer reader.py
 
 services:
   status_register:
@@ -49,9 +48,9 @@ services:
     # restart: always
     environment:
       - VUE_APP_SERVER_URL=192.168.43.69:8081
-    # volumes:
+    volumes:
     #   - ./web/web:/web
-    #   - ./fod_model/photos:/web/dist/img/photos
+      - ./photos:/web/yolov5/photos
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.web.rule=Host(`192.168.43.69`)"
@@ -60,7 +59,7 @@ services:
     # command: npm run serve -- -- port 80
 
   server:
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/server:2.2.0
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/server:latest
     container_name: server
     # restart: always
     environment: 
@@ -104,7 +103,7 @@ services:
       - "8082:8082"
 
   buffer:
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/buffer:2.2.0
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/buffer:latest
     container_name: buffer
     # restart: always
     environment: 
@@ -127,7 +126,7 @@ services:
       - fod_image_register_B
     volumes:
       - ./fod_model:/yolov5
-      # - ./fod_model/photos:/yolov5/photos
+      - ./photos:/yolov5/photos
     command: python detect.py
 
 volumes:

@@ -117,9 +117,15 @@ def save_img(pipeline, img, status):
 
 
 def init_cache():
-    for i in range(1, 5):
-        status_register.set(f"fod_pipeline_{i}_nThreshold", 7500)
-        status_register.set(f"fod_pipeline_{i}_exThreshold", 12000)
+    for i, cfg in enumerate(
+        session.query(FodCfg).order_by(FodCfg.virtual_gpu_id).all()
+    ):
+        if cfg.n_warning_threshold < 7500:
+            cfg.n_warning_threshold = 7500
+        if cfg.ex_warning_threshold < 8000:
+            cfg.ex_warning_threshold = 8000
+        status_register.set(f"fod_pipeline_{i}_nThreshold", cfg.n_warning_threshold)
+        status_register.set(f"fod_pipeline_{i}_exThreshold", cfg.ex_warning_threshold)
 
 
 def exif_size(img):
