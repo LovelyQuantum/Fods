@@ -1,0 +1,4 @@
+pymemcache
+sqlalchemy
+psycopg2
+opencv-python

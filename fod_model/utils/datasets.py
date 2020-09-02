@@ -93,14 +93,18 @@ def save_img(pipeline, img, status):
     if time() - status_register.get(f"fod_pipeline_{pipeline}_time") > 1:
         status_register.set(f"fod_pipeline_{pipeline}_time", time())
         timestamp = datetime.utcnow().astimezone(timezone(timedelta(hours=8)))
-        dir_path = Path("/yolov5/photos").joinpath(
-            timestamp.strftime("%Y"), timestamp.strftime("%B")
-        )
-        dir_path.mkdir(parents=True, exist_ok=True)
-        file_path = dir_path.joinpath(timestamp.strftime(r"%Y%m%d%H%M%S%f") + ".jpg")
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(str(file_path), img)
-        logging.warning(timestamp)
+        if status == "严重预警":
+            dir_path = Path("/yolov5/photos").joinpath(
+                timestamp.strftime("%Y"),
+                timestamp.strftime("%B"),
+                timestamp.strftime("%d"),
+            )
+            dir_path.mkdir(parents=True, exist_ok=True)
+            file_path = dir_path.joinpath(
+                timestamp.strftime(r"%Y%m%d%H%M%S%f") + ".jpg"
+            )
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            cv2.imwrite(str(file_path), img)
 
         fod_record = FodRecord(
             device_id=device_id,
@@ -120,12 +124,12 @@ def init_cache():
     for i, cfg in enumerate(
         session.query(FodCfg).order_by(FodCfg.virtual_gpu_id).all()
     ):
-        if cfg.n_warning_threshold < 7500:
-            cfg.n_warning_threshold = 7500
-        if cfg.ex_warning_threshold < 8000:
-            cfg.ex_warning_threshold = 8000
-        status_register.set(f"fod_pipeline_{i}_nThreshold", cfg.n_warning_threshold)
-        status_register.set(f"fod_pipeline_{i}_exThreshold", cfg.ex_warning_threshold)
+        if cfg.n_warning_threshold < 5000:
+            cfg.n_warning_threshold = 8500
+        if cfg.ex_warning_threshold < 5000:
+            cfg.ex_warning_threshold = 11000
+        status_register.set(f"fod_pipeline_{i+1}_nThreshold", cfg.n_warning_threshold)
+        status_register.set(f"fod_pipeline_{i+1}_exThreshold", cfg.ex_warning_threshold)
 
 
 def exif_size(img):
