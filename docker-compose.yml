@@ -156,6 +156,6 @@ volumes:
   yq_data:
     external: true
 
-networks: 
+networks:
   default:
     name: yuhao_network

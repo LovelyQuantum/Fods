@@ -13,6 +13,7 @@ from pymemcache.client.base import Client
 from pymemcache import serde
 from pathlib import Path
 import numpy as np
+from tqdm import tqdm
 
 
 engine = create_engine("postgresql://quantum:429526000@postgres/yqdb")
@@ -81,8 +82,19 @@ def load_mask_points(pipeline, width, height):
                     [int(float(point["x"]) * width), int(float(point["y"]) * height)]
                 )
             return source_points
+    logging.error(
+        f"Mask points of {device_name} not found(; ω ;), saveing demo image..."
+    )
+    for i in tqdm(range(30)):
+        sleep(1)
+    demo_img = fod_image_register_A.get(f"fod_pipeline_{pipeline}")
+    store_path = Path("demo_image")
+    if not store_path.exists():
+        store_path.mkdir(parents=True)
+    store_path.joinpath(f"{device_name}.jpg")
+    cv2.imwrite(str(store_path), demo_img)
     raise FileNotFoundError(
-        f"Mask points of {device_name} not found( ; ω ; ), please check"
+        f"Mask points of {device_name} not found(; ω ;), please check"
     )
 
 
