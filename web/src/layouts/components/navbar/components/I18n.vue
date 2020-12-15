@@ -1,6 +1,6 @@
 <template>
   <router-link tag="div" class="vx-logo cursor-pointer flex items-center" to="/">
-    <span class="text-primary fontx" style="font-weight:bold">井下异常检测系统</span>
+    <span class="text-primary fontx" style="font-weight:bold">煤矿井下带式输送机异物自动识别系统</span>
   </router-link>
 </template>
 

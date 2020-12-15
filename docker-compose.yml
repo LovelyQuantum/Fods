@@ -44,27 +44,27 @@ services:
       - POSTGRES_DB=yqdb
       - POSTGRES_PASSWORD=429526000
 
-  # web:
-  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:latest
-  #   container_name: web
-  #   # restart: always
-  #   environment:
-  #     - VUE_APP_SERVER_URL=192.168.43.69:8081
-  #   volumes:
-  #   #   - ./web/web:/web
-  #     - ./photos:/web/yolov5/photos
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.web.rule=Host(`192.168.43.69`)"
-  #     - "traefik.http.routers.web.entrypoints=web"
-  #     - "traefik.http.services.web.loadBalancer.server.port=80"
-  #   # command: npm run serve -- -- port 80
+  web:
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/web:latest
+    container_name: web
+    # restart: always
+    environment:
+      - VUE_APP_SERVER_URL=192.168.43.69:8081
+    volumes:
+      # - ./web/web:/web
+      - ./photos:/web/yolov5/photos
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`192.168.43.69`)"
+      - "traefik.http.routers.web.entrypoints=web"
+      - "traefik.http.services.web.loadBalancer.server.port=80"
+    # command: npm run serve -- -- port 80
 
   server:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/server:latest
     container_name: server
     # restart: always
-    environment: 
+    environment:
       - DATABASE_URL=postgresql://quantum:429526000@postgres/yqdb
       - HLS_SERVER_URL=192.168.43.69
     depends_on:
@@ -79,23 +79,23 @@ services:
     command: gunicorn -k gevent -w 5 -b server:80 wsgi:app
     # command: flask init
 
-  # traefik:
-  #   image: traefik
-  #   container_name: traefik
-  #   # restart: always
-  #   volumes:
-  #     - "/var/run/docker.sock:/var/run/docker.sock:ro"
-  #   ports: 
-  #     - "10101:80"
-  #     - "8081:8081"
-  #   depends_on:
-  #     - web
-  #     - server
-  #   command:
-  #     - "--providers.docker=true"
-  #     - "--providers.docker.exposedbydefault=false"
-  #     - "--entrypoints.web.address=:80"
-  #     - "--entrypoints.server.address=:8081"
+  traefik:
+    image: traefik
+    container_name: traefik
+    # restart: always
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    ports:
+      - "10101:80"
+      - "8081:8081"
+    depends_on:
+      - web
+      - server
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.server.address=:8081"
 
   nginx:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/nginx:latest
@@ -108,49 +108,49 @@ services:
     image: registry.cn-hangzhou.aliyuncs.com/yqfods/buffer:latest
     container_name: buffer
     # restart: always
-    environment: 
+    environment:
       - WORK_ENV=development
     volumes:
       - ./buffer:/code
-    depends_on: 
+    depends_on:
       - nginx
     command: python video_buffer.py
 
-  # fod_model:
-  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/fod_model:latest
-  #   container_name: fod_model
-  #   # restart: always
-  #   runtime: nvidia
-  #   environment:
-  #     - NVIDIA_VISIBLE_DEVICES=6
-  #   depends_on:
-  #     - status_register
-  #     - fod_image_register_A
-  #     - fod_image_register_B
-  #     - buffer
-  #   volumes:
-  #     - ./fod_model:/yolov5
-  #     - ./photos:/yolov5/photos
-  #   command: python detect.py
-
-  fod_add:
-    image: registry.cn-hangzhou.aliyuncs.com/yqfods/fod_add:latest
-    container_name: fod_add
+  fod_model:
+    image: registry.cn-hangzhou.aliyuncs.com/yqfods/fod_model:latest
+    container_name: fod_model
     # restart: always
     runtime: nvidia
     environment:
-      - NVIDIA_VISIBLE_DEVICES=7
+      - NVIDIA_VISIBLE_DEVICES=6
     depends_on:
       - status_register
       - fod_image_register_A
       - fod_image_register_B
       - buffer
     volumes:
-      - ./fod_add:/code
-      - ./others_photos:/yolov5/others_photos
-      - ./demo_photos:/yolov5/demo_photos
-      - ./source_points.json:/code/source_points.json
+      - ./fod_model:/yolov5
+      - ./photos:/yolov5/photos
     command: python detect.py
+
+  # fod_add:
+  #   image: registry.cn-hangzhou.aliyuncs.com/yqfods/fod_add:latest
+  #   container_name: fod_add
+  #   # restart: always
+  #   runtime: nvidia
+  #   environment:
+  #     - NVIDIA_VISIBLE_DEVICES=7
+  #   depends_on:
+  #     - status_register
+  #     - fod_image_register_A
+  #     - fod_image_register_B
+  #     - buffer
+  #   volumes:
+  #     - ./fod_add:/code
+  #     - ./others_photos:/yolov5/others_photos
+  #     - ./demo_photos:/yolov5/demo_photos
+  #     - ./source_points.json:/code/source_points.json
+  #   command: python detect.py
 
 volumes:
   yq_data:

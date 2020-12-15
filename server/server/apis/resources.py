@@ -2,7 +2,7 @@ from flask import jsonify, request
 from flask.views import MethodView
 from server.extensions import db
 from server.models import Device, FodRecord, FodCfg, BddCfg, VirtualGpu, DeviceLocation
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pymemcache.client.base import Client
 from pymemcache import serde
 from sqlalchemy import or_, and_
@@ -84,26 +84,21 @@ class FodRecordAPI(MethodView):
             response["records"] = [
                 {
                     "id": record.id,
-                    "timestamp": record.timestamp.astimezone(timezone(timedelta(hours=8))).strftime(r"%Y-%m-%d %H:%M"),
+                    "timestamp": record.timestamp.astimezone(
+                        timezone(timedelta(hours=8))
+                    ).strftime(r"%Y-%m-%d %H:%M"),
                     "deviceName": Device.query.filter_by(id=record.device_id)
                     .first()
                     .name,
-                    "location": DeviceLocation.query.filter_by(
-                        device_id=record.device_id
-                    )
-                    .first()
-                    .location,
+                    "tags": record.tags,
                     "status": record.status,
                 }
-                for Id, record in enumerate(
-                    FodRecord.query.filter(
-                        FodRecord.timestamp.between(date_range_begin, date_range_end)
-                    ).order_by(FodRecord.timestamp.desc())[
-                        current_page
-                        * result_perpage : (current_page + 1)
-                        * result_perpage
-                    ]
-                )
+                for record in FodRecord.query.filter(
+                    FodRecord.timestamp.between(date_range_begin, date_range_end)
+                ).order_by(FodRecord.timestamp.desc())[
+                    current_page * result_perpage : (current_page + 1) * result_perpage
+                ]
+                if record.tags == "其他异物" or record.status == "严重预警"
             ]
         return jsonify(response)
 
@@ -214,7 +209,7 @@ class FodRecordReportAPI(MethodView):
             )[1].astype("int32")
             response["recordSeries"] = [
                 {
-                    "name": "丈八采区预警次数",
+                    "name": "严重预警次数",
                     "data": [
                         {
                             "x": (
@@ -233,14 +228,14 @@ class FodRecordReportAPI(MethodView):
                                     ),
                                 )
                             )
-                            .filter(FodRecord.location == "丈八采区")
+                            .filter(FodRecord.status == "严重预警")
                             .count(),
                         }
                         for i in range(len(date_periods))
                     ],
                 },
                 {
-                    "name": "十四采区预警次数",
+                    "name": "预警次数",
                     "data": [
                         {
                             "x": (
@@ -258,9 +253,7 @@ class FodRecordReportAPI(MethodView):
                                         else int(date_periods[i]) + 2
                                     ),
                                 )
-                            )
-                            .filter(FodRecord.location == "十四采区")
-                            .count(),
+                            ).count(),
                         }
                         for i in range(len(date_periods))
                     ],
@@ -455,10 +448,7 @@ class DeviceSettingAPI(MethodView):
 class SystemInfoAPI(MethodView):
     def get(self):
         response = {"status": "success"}
-        response["systemUpDay"] = (
-            datetime.now()
-            - datetime.fromtimestamp(psutil.Process(os.getpid()).create_time())
-        ).days
+        response["systemUpDay"] = (datetime.now() - datetime(2019, 12, 10)).days
         response["warmingTimes"] = FodRecord.query.count()
         response["exWarmingTimes"] = FodRecord.query.filter(
             # FIXME conditions are redundant

@@ -115,7 +115,7 @@ def detect():
                     )
                 if 0.9 < old_area / max_area < 1.1 or 0.9 < old_core_y / core_y < 1.1:
                     pass
-                elif max_area > nThresholds[pipeline - 1]:
+                elif max_area > exThresholds[pipeline - 1]:
                     save_img(pipeline, im0, status="严重预警")
                     trigger_alarm(pipeline)
                 elif nThresholds[pipeline - 1] < max_area < exThresholds[pipeline - 1]:

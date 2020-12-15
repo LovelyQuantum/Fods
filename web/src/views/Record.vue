@@ -64,7 +64,7 @@
         <vs-th>序号</vs-th>
         <vs-th>时间</vs-th>
         <vs-th>设备名</vs-th>
-        <vs-th>所属矿井</vs-th>
+        <vs-th>异物类别</vs-th>
         <vs-th>级别</vs-th>
       </template>
 
@@ -79,8 +79,8 @@
           <vs-td :data="data[indextr].deviceName">
             {{ data[indextr].deviceName }}
           </vs-td>
-          <vs-td :data="data[indextr].deviceName">
-            {{ data[indextr].location }}
+          <vs-td :data="data[indextr].tags">
+            {{ data[indextr].tags }}
           </vs-td>
           <vs-td :data="data[indextr].status">
             {{ data[indextr].status }}

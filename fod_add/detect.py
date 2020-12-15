@@ -17,7 +17,7 @@ PIPELINE_NUM = 4
 THRESHOLD = 5
 
 # 候选框融合后在周围加大的像素数目
-add_pixel = 50
+add_pixel = -25
 
 
 def GMM_FrameDifferencing():
@@ -87,7 +87,7 @@ def GMM_FrameDifferencing():
             other_score, stone_score = predictor(stone_rgb)
             save_demo(stone, other_score)
             if other_score > THRESHOLD:
-                cv2.rectangle(source_frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                cv2.rectangle(source_frame, (x, y), (x + w, y + h), (118, 59, 149), 2)
                 save_img(pipeline, source_frame)
 
 
